@@ -3,7 +3,7 @@ dist/
 .env
 .DS_Store
 npm-debug.log*
-taskademy-api/
 taskademy-api/.env
 taskademy-api/vendor/
 taskademy-api/.phpunit.result.cache
+taskademy-api/.git-backup/
