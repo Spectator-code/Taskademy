@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\MessageSent;
 use App\Models\Conversation;
 use App\Models\Message;
 use Illuminate\Http\Request;
@@ -15,7 +16,7 @@ class MessageController extends Controller
         $conversations = Conversation::query()
             ->where('user1_id', $userId)
             ->orWhere('user2_id', $userId)
-            ->with(['user1', 'user2'])
+            ->with(['user1', 'user2', 'lastMessage.sender'])
             ->latest()
             ->get();
 
@@ -42,7 +43,7 @@ class MessageController extends Controller
             'user2_id' => $user2,
         ]);
 
-        return response()->json($conversation->load(['user1', 'user2']), 201);
+        return response()->json($conversation->load(['user1', 'user2', 'lastMessage.sender']), 201);
     }
 
     public function messages(Request $request, $conversationId)
@@ -77,7 +78,11 @@ class MessageController extends Controller
             'content' => $validated['content'],
         ]);
 
-        return response()->json($message->load('sender'), 201);
+        $message->load('sender');
+
+        broadcast(new MessageSent($message))->toOthers();
+
+        return response()->json($message, 201);
     }
 }
 

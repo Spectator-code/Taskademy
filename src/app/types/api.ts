@@ -58,6 +58,21 @@ export interface AdminStats {
   open_tasks: number;
 }
 
+export type RegistrationPeriod = 'daily' | 'weekly' | 'monthly' | 'yearly';
+
+export interface RegistrationPoint {
+  date: string;
+  label: string;
+  registrations: number;
+}
+
+export interface RegistrationAnalytics {
+  period: RegistrationPeriod;
+  start_date: string;
+  end_date: string;
+  data: RegistrationPoint[];
+}
+
 export interface AuthResponse {
   user: User;
   token: string;

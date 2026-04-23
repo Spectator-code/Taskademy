@@ -14,6 +14,7 @@ interface AuthContextType {
     role: 'student' | 'client';
   }) => Promise<void>;
   logout: () => Promise<void>;
+  refreshUser: () => Promise<User | null>;
   isAuthenticated: boolean;
 }
 
@@ -58,6 +59,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   };
 
+  const refreshUser = async () => {
+    if (!authService.isAuthenticated()) {
+      setUser(null);
+      return null;
+    }
+
+    const currentUser = await authService.getCurrentUser();
+    setUser(currentUser);
+    return currentUser;
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -66,6 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         login,
         register,
         logout,
+        refreshUser,
         isAuthenticated: !!user,
       }}
     >

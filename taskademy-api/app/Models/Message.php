@@ -8,6 +8,8 @@ class Message extends Model
 {
     protected $fillable = ['conversation_id', 'sender_id', 'content'];
 
+    protected $touches = ['conversation'];
+
     public function conversation()
     {
         return $this->belongsTo(Conversation::class);

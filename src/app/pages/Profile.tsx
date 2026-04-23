@@ -4,6 +4,8 @@ import { ArrowLeft, Star, Mail, MapPin, Calendar, ExternalLink, Upload, FileText
 import { useEffect, useMemo, useState } from "react";
 import { userService } from "../services/user.service";
 import { User as UserType } from "../types/api";
+import { useAuth } from "../contexts/AuthContext";
+import { toast } from "sonner";
 
 const portfolioProjects = [
   {
@@ -64,9 +66,15 @@ const completedTasks = [
 
 export default function Profile() {
   const params = useParams();
+  const { user, refreshUser } = useAuth();
   const userId = Number(params.id);
   const [profileUser, setProfileUser] = useState<UserType | null>(null);
   const [loading, setLoading] = useState(true);
+  const [editing, setEditing] = useState(false);
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [editBio, setEditBio] = useState("");
+  const [editSkills, setEditSkills] = useState("");
 
   const [activeTab, setActiveTab] = useState<'portfolio' | 'reviews' | 'tasks' | 'resume'>('portfolio');
   const [resumeMode, setResumeMode] = useState<'upload' | 'manual' | null>(null);
@@ -132,9 +140,58 @@ export default function Profile() {
     setLoading(true);
     userService
       .getUserById(userId)
-      .then(setProfileUser)
+      .then((loadedUser) => {
+        setProfileUser(loadedUser);
+        setEditName(loadedUser.name ?? "");
+        setEditBio(loadedUser.bio ?? "");
+        setEditSkills(Array.isArray(loadedUser.skills) ? loadedUser.skills.join(", ") : "");
+      })
+      .catch((error: any) => {
+        toast.error(error.response?.data?.message || "Failed to load profile.");
+      })
       .finally(() => setLoading(false));
   }, [userId]);
+
+  const canEditProfile = profileUser && (user?.id === profileUser.id || user?.role === "admin");
+
+  const handleCancelEdit = () => {
+    setEditName(profileUser?.name ?? "");
+    setEditBio(profileUser?.bio ?? "");
+    setEditSkills(Array.isArray(profileUser?.skills) ? profileUser.skills.join(", ") : "");
+    setEditing(false);
+  };
+
+  const handleSaveProfile = async () => {
+    if (!profileUser) return;
+
+    setSavingProfile(true);
+    try {
+      const updatedUser = await userService.updateProfile(profileUser.id, {
+        name: editName.trim(),
+        bio: editBio.trim() || undefined,
+        skills: editSkills
+          .split(",")
+          .map((skill) => skill.trim())
+          .filter(Boolean),
+      });
+
+      setProfileUser(updatedUser);
+      setEditName(updatedUser.name ?? "");
+      setEditBio(updatedUser.bio ?? "");
+      setEditSkills(Array.isArray(updatedUser.skills) ? updatedUser.skills.join(", ") : "");
+      setEditing(false);
+
+      if (user?.id === updatedUser.id) {
+        await refreshUser();
+      }
+
+      toast.success("Profile updated");
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to update profile.");
+    } finally {
+      setSavingProfile(false);
+    }
+  };
 
   const initials = useMemo(() => {
     const name = profileUser?.name?.trim();
@@ -166,11 +223,19 @@ export default function Profile() {
               {initials}
             </div>
             <div className="flex-1">
-              <div className="flex items-start justify-between mb-4">
+              <div className="flex items-start justify-between gap-4 mb-4">
                 <div>
-                  <h1 className="text-3xl font-bold mb-2">
-                    {loading ? "Loading..." : (profileUser?.name ?? "User")}
-                  </h1>
+                  {editing ? (
+                    <input
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      className="text-3xl font-bold mb-2 w-full max-w-md px-4 py-2 rounded-xl bg-input border border-border focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                    />
+                  ) : (
+                    <h1 className="text-3xl font-bold mb-2">
+                      {loading ? "Loading..." : (profileUser?.name ?? "User")}
+                    </h1>
+                  )}
                   <div className="flex items-center gap-2 mb-3">
                     <Star className="w-5 h-5 fill-primary text-primary" />
                     <span className="font-medium">{profileUser?.rating ?? "0.00"}</span>
@@ -179,18 +244,73 @@ export default function Profile() {
                     </span>
                   </div>
                 </div>
-                <button className="px-6 py-3 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all">
-                  Edit Profile
-                </button>
+                {canEditProfile && (
+                  editing ? (
+                    <div className="flex gap-3">
+                      <button
+                        type="button"
+                        onClick={handleCancelEdit}
+                        disabled={savingProfile}
+                        className="px-5 py-3 rounded-xl bg-background hover:bg-muted transition-all disabled:opacity-50"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleSaveProfile}
+                        disabled={savingProfile || !editName.trim()}
+                        className="px-6 py-3 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all disabled:opacity-50"
+                      >
+                        {savingProfile ? "Saving..." : "Save Profile"}
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setEditing(true)}
+                      className="px-6 py-3 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all"
+                    >
+                      Edit Profile
+                    </button>
+                  )
+                )}
               </div>
 
-              <div className="flex flex-wrap gap-4 mb-4">
-                {(profileUser?.skills ?? []).slice(0, 8).map((s) => (
-                  <span key={s} className="px-4 py-2 rounded-full bg-primary/10 text-primary">
-                    {s}
-                  </span>
-                ))}
-              </div>
+              {editing ? (
+                <div className="mb-4 space-y-4">
+                  <div>
+                    <label className="block mb-2 text-sm font-medium text-foreground/70">Bio</label>
+                    <textarea
+                      value={editBio}
+                      onChange={(e) => setEditBio(e.target.value)}
+                      rows={3}
+                      className="w-full px-4 py-3 rounded-xl bg-input border border-border focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all resize-none"
+                      placeholder="Tell clients and students about this profile..."
+                    />
+                  </div>
+                  <div>
+                    <label className="block mb-2 text-sm font-medium text-foreground/70">Skills</label>
+                    <input
+                      value={editSkills}
+                      onChange={(e) => setEditSkills(e.target.value)}
+                      className="w-full px-4 py-3 rounded-xl bg-input border border-border focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                      placeholder="React, Laravel, UI Design"
+                    />
+                    <p className="text-sm text-foreground/60 mt-2">Separate skills with commas.</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-wrap gap-4 mb-4">
+                  {(profileUser?.skills ?? []).slice(0, 8).map((s) => (
+                    <span key={s} className="px-4 py-2 rounded-full bg-primary/10 text-primary">
+                      {s}
+                    </span>
+                  ))}
+                  {(profileUser?.skills ?? []).length === 0 && (
+                    <span className="text-foreground/60">No skills added yet.</span>
+                  )}
+                </div>
+              )}
 
               <div className="grid md:grid-cols-3 gap-4 text-foreground/60">
                 <div className="flex items-center gap-2">

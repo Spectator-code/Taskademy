@@ -7,3 +7,4 @@ taskademy-api/.env
 taskademy-api/vendor/
 taskademy-api/.phpunit.result.cache
 taskademy-api/.git-backup/
+.codex-local-logs/

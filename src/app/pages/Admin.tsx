@@ -2,15 +2,33 @@ import { Link } from "react-router";
 import { motion } from "motion/react";
 import { ArrowLeft, Users, ListChecks, FolderOpen, Shield } from "lucide-react";
 import { useEffect, useState } from "react";
+import {
+  CartesianGrid,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import { adminService } from "../services/admin.service";
-import { AdminStats, Task, User } from "../types/api";
+import { AdminStats, RegistrationPeriod, RegistrationPoint, Task, User } from "../types/api";
 import { toast } from "sonner";
 
 export default function Admin() {
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [registrationData, setRegistrationData] = useState<RegistrationPoint[]>([]);
+  const [registrationPeriod, setRegistrationPeriod] = useState<RegistrationPeriod>("daily");
+  const [startDate, setStartDate] = useState(() => {
+    const date = new Date();
+    date.setDate(date.getDate() - 29);
+    return date.toISOString().slice(0, 10);
+  });
+  const [endDate, setEndDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [loading, setLoading] = useState(true);
+  const [analyticsLoading, setAnalyticsLoading] = useState(true);
 
   useEffect(() => {
     let ignore = false;
@@ -44,6 +62,56 @@ export default function Admin() {
       ignore = true;
     };
   }, []);
+
+  useEffect(() => {
+    let ignore = false;
+    setAnalyticsLoading(true);
+
+    adminService
+      .getRegistrations({
+        period: registrationPeriod,
+        start_date: startDate,
+        end_date: endDate,
+      })
+      .then((response) => {
+        if (!ignore) {
+          setRegistrationData(response.data);
+        }
+      })
+      .catch((error: any) => {
+        if (!ignore) {
+          toast.error(error.response?.data?.message || "Failed to load registration analytics.");
+        }
+      })
+      .finally(() => {
+        if (!ignore) {
+          setAnalyticsLoading(false);
+        }
+      });
+
+    return () => {
+      ignore = true;
+    };
+  }, [registrationPeriod, startDate, endDate]);
+
+  const setPeriod = (period: RegistrationPeriod) => {
+    const end = new Date();
+    const start = new Date();
+
+    if (period === "daily") {
+      start.setDate(end.getDate() - 29);
+    } else if (period === "weekly") {
+      start.setDate(end.getDate() - 7 * 11);
+    } else if (period === "monthly") {
+      start.setMonth(end.getMonth() - 11);
+    } else {
+      start.setFullYear(end.getFullYear() - 4);
+    }
+
+    setRegistrationPeriod(period);
+    setStartDate(start.toISOString().slice(0, 10));
+    setEndDate(end.toISOString().slice(0, 10));
+  };
 
   const statCards = [
     {
@@ -108,7 +176,100 @@ export default function Admin() {
           {loading ? (
             <div className="text-foreground/60">Loading admin data...</div>
           ) : (
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="space-y-6">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.15 }}
+                className="bg-card rounded-2xl p-6 border border-border"
+              >
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
+                  <div>
+                    <h2 className="text-xl font-bold mb-1">User Registrations</h2>
+                    <p className="text-sm text-foreground/60">Track signups by selected date range.</p>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-3">
+                    <div className="flex rounded-xl border border-border overflow-hidden">
+                      {(["daily", "weekly", "monthly", "yearly"] as RegistrationPeriod[]).map((period) => (
+                        <button
+                          key={period}
+                          type="button"
+                          onClick={() => setPeriod(period)}
+                          className={`px-4 py-2 text-sm capitalize transition-colors ${
+                            registrationPeriod === period
+                              ? "bg-primary text-primary-foreground"
+                              : "text-foreground/70 hover:bg-background"
+                          }`}
+                        >
+                          {period}
+                        </button>
+                      ))}
+                    </div>
+
+                    <input
+                      type="date"
+                      value={startDate}
+                      max={endDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      className="px-3 py-2 rounded-xl bg-background border border-border text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    />
+                    <input
+                      type="date"
+                      value={endDate}
+                      min={startDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      className="px-3 py-2 rounded-xl bg-background border border-border text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    />
+                  </div>
+                </div>
+
+                <div className="h-80">
+                  {analyticsLoading ? (
+                    <div className="h-full flex items-center justify-center text-foreground/60">
+                      Loading analytics...
+                    </div>
+                  ) : (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={registrationData} margin={{ top: 10, right: 20, bottom: 0, left: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                        <XAxis
+                          dataKey="label"
+                          stroke="var(--muted-foreground)"
+                          tickLine={false}
+                          axisLine={false}
+                          minTickGap={24}
+                        />
+                        <YAxis
+                          allowDecimals={false}
+                          stroke="var(--muted-foreground)"
+                          tickLine={false}
+                          axisLine={false}
+                        />
+                        <Tooltip
+                          contentStyle={{
+                            background: "var(--card)",
+                            border: "1px solid var(--border)",
+                            borderRadius: "12px",
+                            color: "var(--foreground)",
+                          }}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="registrations"
+                          name="Registrations"
+                          stroke="var(--primary)"
+                          strokeWidth={3}
+                          dot={{ r: 3 }}
+                          activeDot={{ r: 5 }}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  )}
+                </div>
+              </motion.div>
+
+              <div className="grid md:grid-cols-2 gap-6">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -157,6 +318,7 @@ export default function Admin() {
                   ))}
                 </div>
               </motion.div>
+              </div>
             </div>
           )}
         </motion.div>

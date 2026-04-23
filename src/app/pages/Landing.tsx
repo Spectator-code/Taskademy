@@ -1,8 +1,12 @@
 import { Link } from "react-router";
 import { motion } from "motion/react";
 import { Brain, Briefcase, Star, ArrowRight } from "lucide-react";
+import { useAuth } from "../contexts/AuthContext";
 
 export default function Landing() {
+  const { isAuthenticated } = useAuth();
+  const homeTarget = isAuthenticated ? "/dashboard" : "/";
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -13,7 +17,7 @@ export default function Landing() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <Link to="/" className="text-2xl font-bold">
+            <Link to={homeTarget} className="text-2xl font-bold">
               Taskademy
             </Link>
           </motion.div>
@@ -24,7 +28,7 @@ export default function Landing() {
             transition={{ duration: 0.6, delay: 0.1 }}
             className="hidden md:flex items-center gap-8"
           >
-            <Link to="/" className="text-foreground/80 hover:text-foreground transition-colors">
+            <Link to={homeTarget} className="text-foreground/80 hover:text-foreground transition-colors">
               Home
             </Link>
             <Link to="/browse" className="text-foreground/80 hover:text-foreground transition-colors">
@@ -41,18 +45,29 @@ export default function Landing() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="flex items-center gap-4"
           >
-            <Link
-              to="/login"
-              className="px-5 py-2.5 rounded-xl text-foreground/80 hover:text-foreground transition-colors"
-            >
-              Login
-            </Link>
-            <Link
-              to="/register"
-              className="px-5 py-2.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all"
-            >
-              Register
-            </Link>
+            {isAuthenticated ? (
+              <Link
+                to="/dashboard"
+                className="px-5 py-2.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all"
+              >
+                Dashboard
+              </Link>
+            ) : (
+              <>
+                <Link
+                  to="/login"
+                  className="px-5 py-2.5 rounded-xl text-foreground/80 hover:text-foreground transition-colors"
+                >
+                  Login
+                </Link>
+                <Link
+                  to="/register"
+                  className="px-5 py-2.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all"
+                >
+                  Register
+                </Link>
+              </>
+            )}
           </motion.div>
         </div>
       </header>

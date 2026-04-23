@@ -1,9 +1,27 @@
 import apiClient from '../config/api';
-import { AdminStats, PaginatedResponse, User, Task } from '../types/api';
+import {
+  AdminStats,
+  PaginatedResponse,
+  RegistrationAnalytics,
+  RegistrationPeriod,
+  User,
+  Task,
+} from '../types/api';
 
 export const adminService = {
   async getStats(): Promise<AdminStats> {
     const response = await apiClient.get<AdminStats>('/admin/stats');
+    return response.data;
+  },
+
+  async getRegistrations(params: {
+    period: RegistrationPeriod;
+    start_date: string;
+    end_date: string;
+  }): Promise<RegistrationAnalytics> {
+    const response = await apiClient.get<RegistrationAnalytics>('/admin/registrations', {
+      params,
+    });
     return response.data;
   },
 

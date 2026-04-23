@@ -1,4 +1,4 @@
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { motion } from "motion/react";
 import {
   LayoutDashboard,
@@ -12,6 +12,9 @@ import {
   DollarSign,
   CheckCircle,
   ArrowRight,
+  LogOut,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
@@ -20,9 +23,16 @@ import { Task } from "../types/api";
 import { toast } from "sonner";
 
 export default function Dashboard() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  const handleLogout = async () => {
+    await logout();
+    navigate("/", { replace: true });
+  };
 
   useEffect(() => {
     let ignore = false;
@@ -78,89 +88,151 @@ export default function Dashboard() {
     [tasks, user?.id]
   );
 
+  const navItems = [
+    {
+      to: "/dashboard",
+      icon: LayoutDashboard,
+      label: "Dashboard",
+      active: true,
+    },
+    {
+      to: "/browse",
+      icon: Search,
+      label: "Browse Tasks",
+    },
+    {
+      to: "/browse",
+      icon: ListChecks,
+      label: "My Tasks",
+    },
+    {
+      to: "/messages",
+      icon: MessageSquare,
+      label: "Messages",
+    },
+    {
+      to: user?.id ? `/profile/${user.id}` : "/profile/0",
+      icon: User,
+      label: "Profile",
+    },
+    {
+      to: "/settings",
+      icon: Settings,
+      label: "Settings",
+    },
+    ...(user?.role === "admin"
+      ? [
+          {
+            to: "/admin",
+            icon: Star,
+            label: "Admin",
+          },
+        ]
+      : []),
+  ];
+
   return (
     <div className="min-h-screen bg-background flex">
-      <aside className="w-64 border-r border-border flex flex-col">
-        <div className="p-6 border-b border-border">
-          <Link to="/" className="text-2xl font-bold">
-            Taskademy
-          </Link>
+      <aside
+        className={`border-r border-border flex flex-col transition-all duration-300 ease-in-out ${
+          sidebarCollapsed ? "w-20" : "w-64"
+        }`}
+      >
+        <div
+          className={`border-b border-border flex items-center ${
+            sidebarCollapsed ? "p-4 justify-center" : "p-6 justify-between gap-3"
+          }`}
+        >
+          {!sidebarCollapsed && (
+            <Link to="/dashboard" className="text-2xl font-bold truncate">
+              Taskademy
+            </Link>
+          )}
+          <button
+            type="button"
+            onClick={() => setSidebarCollapsed((value) => !value)}
+            className="w-10 h-10 rounded-xl flex items-center justify-center text-foreground/60 hover:bg-card hover:text-foreground transition-all"
+            aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            {sidebarCollapsed ? (
+              <PanelLeftOpen className="w-5 h-5" />
+            ) : (
+              <PanelLeftClose className="w-5 h-5" />
+            )}
+          </button>
         </div>
 
         {user?.role === "client" && (
-          <div className="p-4 border-b border-border">
+          <div className={`${sidebarCollapsed ? "p-3" : "p-4"} border-b border-border`}>
             <Link
               to="/post-task"
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all"
+              className={`w-full flex items-center justify-center gap-2 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all ${
+                sidebarCollapsed ? "h-11 px-0" : "px-4 py-3"
+              }`}
+              title="Post a Task"
+              aria-label="Post a Task"
             >
-              + Post a Task
+              <span className="text-lg leading-none">+</span>
+              {!sidebarCollapsed && <span>Post a Task</span>}
             </Link>
           </div>
         )}
 
-        <nav className="flex-1 p-4 space-y-2">
-          <Link
-            to="/dashboard"
-            className="flex items-center gap-3 px-4 py-3 rounded-xl bg-primary/10 text-primary"
-          >
-            <LayoutDashboard className="w-5 h-5" />
-            Dashboard
-          </Link>
-          <Link
-            to="/browse"
-            className="flex items-center gap-3 px-4 py-3 rounded-xl text-foreground/60 hover:bg-card hover:text-foreground transition-all"
-          >
-            <Search className="w-5 h-5" />
-            Browse Tasks
-          </Link>
-          <Link
-            to="/browse"
-            className="flex items-center gap-3 px-4 py-3 rounded-xl text-foreground/60 hover:bg-card hover:text-foreground transition-all"
-          >
-            <ListChecks className="w-5 h-5" />
-            My Tasks
-          </Link>
-          <Link
-            to="/messages"
-            className="flex items-center gap-3 px-4 py-3 rounded-xl text-foreground/60 hover:bg-card hover:text-foreground transition-all"
-          >
-            <MessageSquare className="w-5 h-5" />
-            Messages
-          </Link>
-          <Link
-            to={user?.id ? `/profile/${user.id}` : "/profile/0"}
-            className="flex items-center gap-3 px-4 py-3 rounded-xl text-foreground/60 hover:bg-card hover:text-foreground transition-all"
-          >
-            <User className="w-5 h-5" />
-            Profile
-          </Link>
-          <Link
-            to="/settings"
-            className="flex items-center gap-3 px-4 py-3 rounded-xl text-foreground/60 hover:bg-card hover:text-foreground transition-all"
-          >
-            <Settings className="w-5 h-5" />
-            Settings
-          </Link>
-          {user?.role === "admin" && (
+        <nav className={`${sidebarCollapsed ? "p-3" : "p-4"} flex-1 space-y-2`}>
+          {navItems.map((item) => (
             <Link
-              to="/admin"
-              className="flex items-center gap-3 px-4 py-3 rounded-xl text-foreground/60 hover:bg-card hover:text-foreground transition-all"
+              key={`${item.to}-${item.label}`}
+              to={item.to}
+              className={`flex items-center rounded-xl transition-all ${
+                sidebarCollapsed
+                  ? "h-12 justify-center px-0"
+                  : "gap-3 px-4 py-3"
+              } ${
+                item.active
+                  ? "bg-primary/10 text-primary"
+                  : "text-foreground/60 hover:bg-card hover:text-foreground"
+              }`}
+              title={item.label}
+              aria-label={item.label}
             >
-              <Star className="w-5 h-5" />
-              Admin
+              <item.icon className="w-5 h-5 flex-shrink-0" />
+              {!sidebarCollapsed && <span>{item.label}</span>}
             </Link>
-          )}
+          ))}
         </nav>
 
-        <div className="p-4 border-t border-border">
-          <div className="flex items-center gap-3 px-4 py-3">
-            <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-              <User className="w-5 h-5 text-primary" />
+        <div className={`${sidebarCollapsed ? "p-3" : "p-4"} border-t border-border`}>
+          <div
+            className={`flex items-center ${
+              sidebarCollapsed ? "flex-col gap-2" : "justify-between gap-3 px-4 py-3"
+            }`}
+          >
+            <div
+              className={`flex items-center min-w-0 ${
+                sidebarCollapsed ? "justify-center" : "gap-3"
+              }`}
+              title={`${user?.name ?? "User"}${user?.role ? ` - ${user.role}` : ""}`}
+            >
+              <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                <User className="w-5 h-5 text-primary" />
+              </div>
+              {!sidebarCollapsed && (
+                <div className="min-w-0">
+                  <div className="font-medium truncate">{user?.name ?? "User"}</div>
+                  <div className="text-sm text-foreground/60 capitalize">{user?.role ?? ""}</div>
+                </div>
+              )}
             </div>
-            <div>
-              <div className="font-medium">{user?.name ?? "User"}</div>
-              <div className="text-sm text-foreground/60 capitalize">{user?.role ?? ""}</div>
-            </div>
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="w-9 h-9 rounded-xl flex items-center justify-center text-foreground/60 hover:bg-card hover:text-foreground transition-all"
+              aria-label="Logout"
+              title="Logout"
+            >
+              <LogOut className="w-5 h-5" />
+            </button>
           </div>
         </div>
       </aside>
