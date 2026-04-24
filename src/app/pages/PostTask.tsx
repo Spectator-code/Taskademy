@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router";
 import { motion } from "motion/react";
-import { ArrowLeft, DollarSign, Calendar, Tag } from "lucide-react";
+import { ArrowLeft, PhilippinePeso, Calendar, Tag } from "lucide-react";
 import { useState } from "react";
 import { taskService } from "../services/task.service";
 import { toast } from "sonner";
@@ -147,11 +147,11 @@ export default function PostTask() {
             <div className="grid md:grid-cols-2 gap-6">
               <div className="bg-card rounded-2xl p-6 border border-border">
                 <label htmlFor="budget" className="block mb-3">
-                  <DollarSign className="inline w-4 h-4 mr-2" />
+                  <PhilippinePeso className="inline w-4 h-4 mr-2" />
                   Budget
                 </label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-foreground/60">$</span>
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-foreground/60">₱</span>
                   <input
                     id="budget"
                     name="budget"
@@ -159,7 +159,7 @@ export default function PostTask() {
                     value={formData.budget}
                     onChange={handleChange}
                     placeholder="150"
-                    className="w-full pl-8 pr-4 py-3 rounded-xl bg-input border border-border focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                    className="w-full pl-9 pr-4 py-3 rounded-xl bg-input border border-border focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
                     required
                   />
                 </div>

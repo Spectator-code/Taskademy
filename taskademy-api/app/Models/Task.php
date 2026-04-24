@@ -14,6 +14,9 @@ class Task extends Model
         'budget',
         'deadline',
         'status',
+        'moderation_status',
+        'rejection_reason',
+        'archived_at',
         'client_id',
         'student_id',
     ];
@@ -23,6 +26,7 @@ class Task extends Model
         return [
             'budget' => 'decimal:2',
             'deadline' => 'date',
+            'archived_at' => 'datetime',
         ];
     }
 
@@ -35,5 +39,9 @@ class Task extends Model
     {
         return $this->belongsTo(User::class, 'student_id');
     }
-}
 
+    public function applications()
+    {
+        return $this->hasMany(TaskApplication::class);
+    }
+}

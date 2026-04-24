@@ -4,8 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Task;
 use App\Models\User;
+use App\Models\Conversation;
+use App\Models\Message;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 
 class AdminController extends Controller
 {
@@ -15,6 +18,7 @@ class AdminController extends Controller
             'users' => User::count(),
             'tasks' => Task::count(),
             'open_tasks' => Task::where('status', 'open')->count(),
+            'pending_tasks' => Task::where('moderation_status', 'pending')->count(),
         ]);
     }
 
@@ -84,6 +88,64 @@ class AdminController extends Controller
         return Task::with(['client', 'student'])->latest()->paginate(25);
     }
 
+    public function approveTask($id)
+    {
+        $task = Task::findOrFail($id);
+        $task->update([
+            'moderation_status' => 'approved',
+            'rejection_reason' => null,
+            'archived_at' => null,
+        ]);
+
+        return response()->json($task->load(['client', 'student']));
+    }
+
+    public function rejectTask(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'reason' => 'required|string|max:2000',
+        ]);
+
+        $task = Task::with('client')->findOrFail($id);
+        $task->update([
+            'moderation_status' => 'rejected',
+            'rejection_reason' => $validated['reason'],
+            'archived_at' => now(),
+        ]);
+
+        $this->sendTaskademyAiRejectionMessage($task, $validated['reason']);
+
+        return response()->json($task->load(['client', 'student']));
+    }
+
+    private function sendTaskademyAiRejectionMessage(Task $task, string $reason): void
+    {
+        $systemUser = User::firstOrCreate(
+            ['email' => 'taskademy.ai@system.local'],
+            [
+                'name' => 'Taskademy.AI',
+                'password' => Hash::make(str()->random(32)),
+                'role' => 'admin',
+                'bio' => 'Automated Taskademy moderation assistant.',
+            ],
+        );
+
+        [$user1, $user2] = $systemUser->id < $task->client_id
+            ? [$systemUser->id, $task->client_id]
+            : [$task->client_id, $systemUser->id];
+
+        $conversation = Conversation::firstOrCreate([
+            'user1_id' => $user1,
+            'user2_id' => $user2,
+        ]);
+
+        Message::create([
+            'conversation_id' => $conversation->id,
+            'sender_id' => $systemUser->id,
+            'content' => "Your task post \"{$task->title}\" got archived by Taskademy.AI. Lowkey it did not pass the vibe check.\n\nWhy it got yeeted: {$reason}",
+        ]);
+    }
+
     public function deleteUser($id)
     {
         $user = User::findOrFail($id);
@@ -134,4 +196,3 @@ class AdminController extends Controller
         };
     }
 }
-

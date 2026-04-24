@@ -38,6 +38,11 @@ class User extends Authenticatable
         return $this->hasMany(Task::class, 'student_id');
     }
 
+    public function taskApplications()
+    {
+        return $this->hasMany(TaskApplication::class, 'applicant_id');
+    }
+
     /**
      * Get the attributes that should be cast.
      *

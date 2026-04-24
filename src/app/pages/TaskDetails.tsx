@@ -1,18 +1,21 @@
 import { Link, useParams } from "react-router";
 import { motion } from "motion/react";
-import { ArrowLeft, DollarSign, Clock, User, Star, Heart } from "lucide-react";
+import { ArrowLeft, PhilippinePeso, Clock, User, Star, Heart, FileText, CheckCircle } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { taskService } from "../services/task.service";
-import { Task } from "../types/api";
+import { Task, TaskApplication } from "../types/api";
 import { useAuth } from "../contexts/AuthContext";
 import { toast } from "sonner";
+import { formatPeso } from "../utils/currency";
 
 export default function TaskDetails() {
   const { id } = useParams();
   const { user } = useAuth();
   const [task, setTask] = useState<Task | null>(null);
+  const [applications, setApplications] = useState<TaskApplication[]>([]);
   const [loading, setLoading] = useState(true);
   const [applying, setApplying] = useState(false);
+  const [acceptingId, setAcceptingId] = useState<number | null>(null);
 
   useEffect(() => {
     if (!id) {
@@ -24,9 +27,20 @@ export default function TaskDetails() {
 
     taskService
       .getTaskById(Number(id))
-      .then((response) => {
+      .then(async (response) => {
         if (!ignore) {
           setTask(response);
+        }
+
+        if (
+          response
+          && user
+          && (response.client_id === user.id || user.role === "admin")
+        ) {
+          const taskApplications = await taskService.getTaskApplications(response.id);
+          if (!ignore) {
+            setApplications(taskApplications);
+          }
         }
       })
       .catch((error: any) => {
@@ -43,7 +57,16 @@ export default function TaskDetails() {
     return () => {
       ignore = true;
     };
-  }, [id]);
+  }, [id, user]);
+
+  const canManageApplications = !!task && !!user && (task.client_id === user.id || user.role === "admin");
+  const canApply =
+    !!task
+    && !!user
+    && ["student", "admin"].includes(user.role)
+    && task.client_id !== user.id
+    && task.status === "open"
+    && task.moderation_status === "approved";
 
   const requirements = useMemo(() => {
     if (!task?.requirements) {
@@ -69,6 +92,29 @@ export default function TaskDetails() {
       toast.error(error.response?.data?.message || "Failed to apply for task.");
     } finally {
       setApplying(false);
+    }
+  };
+
+  const handleAccept = async (studentId: number) => {
+    if (!task) {
+      return;
+    }
+
+    setAcceptingId(studentId);
+    try {
+      const updatedTask = await taskService.acceptApplication(task.id, studentId);
+      setTask(updatedTask);
+      setApplications((current) =>
+        current.map((application) => ({
+          ...application,
+          status: application.applicant_id === studentId ? "accepted" : "rejected",
+        }))
+      );
+      toast.success("Applicant accepted.");
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to accept applicant.");
+    } finally {
+      setAcceptingId(null);
     }
   };
 
@@ -119,12 +165,15 @@ export default function TaskDetails() {
                 <span className="px-4 py-1.5 rounded-full bg-green-500/10 text-green-400 capitalize">
                   {task.status.replace("_", " ")}
                 </span>
+                <span className="px-4 py-1.5 rounded-full bg-muted text-foreground/70 capitalize">
+                  {task.moderation_status}
+                </span>
               </div>
               <h1 className="text-4xl font-bold mb-4">{task.title}</h1>
               <div className="flex items-center gap-6 text-foreground/60 flex-wrap">
                 <div className="flex items-center gap-2">
-                  <DollarSign className="w-5 h-5" />
-                  ${Number(task.budget).toFixed(2)}
+                  <PhilippinePeso className="w-5 h-5" />
+                  {formatPeso(task.budget)}
                 </div>
                 <div className="flex items-center gap-2">
                   <Clock className="w-5 h-5" />
@@ -161,7 +210,12 @@ export default function TaskDetails() {
                   <User className="w-8 h-8 text-primary" />
                 </div>
                 <div className="flex-1">
-                  <div className="font-bold text-lg mb-1">{task.client?.name ?? "Client"}</div>
+                  <Link
+                    to={`/profile/${task.client_id}`}
+                    className="font-bold text-lg mb-1 hover:text-primary transition-colors inline-block"
+                  >
+                    {task.client?.name ?? "Client"}
+                  </Link>
                   <div className="flex items-center gap-4 text-foreground/60 flex-wrap">
                     <div className="flex items-center gap-1">
                       <Star className="w-4 h-4 fill-primary text-primary" />
@@ -172,6 +226,64 @@ export default function TaskDetails() {
                 </div>
               </div>
             </div>
+
+            {canManageApplications && (
+              <div className="bg-card rounded-2xl p-6 border border-border">
+                <h2 className="text-2xl font-bold mb-4">Applicants</h2>
+                {applications.length === 0 ? (
+                  <p className="text-foreground/60">No one has applied yet.</p>
+                ) : (
+                  <div className="space-y-4">
+                    {applications.map((application) => (
+                      <div
+                        key={application.id}
+                        className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 p-4 rounded-xl bg-background/50 border border-border"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-11 h-11 rounded-full bg-primary/15 flex items-center justify-center">
+                            <User className="w-5 h-5 text-primary" />
+                          </div>
+                          <div>
+                            <Link
+                              to={`/profile/${application.applicant_id}`}
+                              className="font-bold hover:text-primary transition-colors"
+                            >
+                              {application.applicant?.name ?? "Applicant"}
+                            </Link>
+                            <div className="text-sm text-foreground/60 capitalize">
+                              {application.applicant?.role ?? "student"} · {application.status}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Link
+                            to={`/profile/${application.applicant_id}`}
+                            className="px-4 py-2 rounded-xl bg-card border border-border hover:bg-muted transition-all flex items-center gap-2 text-sm"
+                          >
+                            <FileText className="w-4 h-4" />
+                            Profile / Resume
+                          </Link>
+                          <button
+                            type="button"
+                            onClick={() => handleAccept(application.applicant_id)}
+                            disabled={application.status === "accepted" || acceptingId === application.applicant_id}
+                            className="px-4 py-2 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-sm"
+                          >
+                            <CheckCircle className="w-4 h-4" />
+                            {application.status === "accepted"
+                              ? "Accepted"
+                              : acceptingId === application.applicant_id
+                              ? "Accepting..."
+                              : "Accept"}
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </motion.div>
 
           <motion.div
@@ -183,13 +295,17 @@ export default function TaskDetails() {
             <div className="bg-card rounded-2xl p-6 border border-border sticky top-8 space-y-6">
               <button
                 onClick={handleApply}
-                disabled={applying || user?.role !== "student" || task.status !== "open"}
+                disabled={applying || !canApply}
                 className="w-full px-6 py-4 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {task.status !== "open"
+                {task.moderation_status !== "approved"
+                  ? "Waiting for Approval"
+                  : task.status !== "open"
                   ? "Task Closed"
-                  : user?.role !== "student"
-                  ? "Students Can Apply"
+                  : user?.role === "client"
+                  ? "Clients Cannot Apply"
+                  : task.client_id === user?.id
+                  ? "Your Task"
                   : applying
                   ? "Submitting..."
                   : "Apply for Task"}
@@ -203,7 +319,7 @@ export default function TaskDetails() {
               <div className="pt-6 border-t border-border space-y-3 text-sm">
                 <div className="flex justify-between">
                   <span className="text-foreground/60">Budget</span>
-                  <span className="font-medium">${Number(task.budget).toFixed(2)}</span>
+                  <span className="font-medium">{formatPeso(task.budget)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-foreground/60">Deadline</span>

@@ -18,12 +18,15 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Tasks
     Route::get('/tasks', [TaskController::class, 'index']);
+    Route::get('/tasks/mine', [TaskController::class, 'mine']);
     Route::post('/tasks', [TaskController::class, 'store']);
     Route::get('/tasks/{id}', [TaskController::class, 'show']);
     Route::put('/tasks/{id}', [TaskController::class, 'update']);
     Route::delete('/tasks/{id}', [TaskController::class, 'destroy']);
     Route::post('/tasks/{id}/apply', [TaskController::class, 'apply']);
+    Route::get('/tasks/{id}/applications', [TaskController::class, 'applications']);
     Route::post('/tasks/{id}/accept', [TaskController::class, 'acceptApplication']);
+    Route::post('/tasks/{id}/complete', [TaskController::class, 'complete']);
 
     // Messages
     Route::get('/conversations', [MessageController::class, 'conversations']);
@@ -42,8 +45,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/admin/registrations', [AdminController::class, 'registrations']);
         Route::get('/admin/users', [AdminController::class, 'users']);
         Route::get('/admin/tasks', [AdminController::class, 'tasks']);
+        Route::post('/admin/tasks/{id}/approve', [AdminController::class, 'approveTask']);
+        Route::post('/admin/tasks/{id}/reject', [AdminController::class, 'rejectTask']);
         Route::delete('/admin/users/{id}', [AdminController::class, 'deleteUser']);
         Route::put('/admin/users/{id}/role', [AdminController::class, 'updateUserRole']);
     });
 });
-

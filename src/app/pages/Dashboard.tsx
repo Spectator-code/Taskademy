@@ -10,8 +10,9 @@ import {
   Settings,
   Star,
   Clock,
-  DollarSign,
+  PhilippinePeso,
   CheckCircle,
+  ClipboardCheck,
   ArrowRight,
   LogOut,
   PanelLeftClose,
@@ -24,13 +25,17 @@ import { Task } from "../types/api";
 import { toast } from "sonner";
 import ThemeSwitcher from "../components/ui/ThemeSwitcher";
 import { useApp } from "../contexts/AppContext";
+import { formatPeso } from "../utils/currency";
 
 export default function Dashboard() {
   const { user, logout } = useAuth();
   const { isSidebarCollapsed, toggleSidebar } = useApp();
   const navigate = useNavigate();
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [postedTasks, setPostedTasks] = useState<Task[]>([]);
+  const [assignedTasks, setAssignedTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
+  const [completingTaskId, setCompletingTaskId] = useState<number | null>(null);
 
    const handleLogout = async () => {
     await logout();
@@ -56,11 +61,16 @@ export default function Dashboard() {
   useEffect(() => {
     let ignore = false;
 
-    taskService
-      .getTasks()
-      .then((response) => {
+    Promise.all([
+      taskService.getTasks(),
+      taskService.getMyTasks("posted"),
+      taskService.getMyTasks("assigned"),
+    ])
+      .then(([response, postedResponse, assignedResponse]) => {
         if (!ignore) {
           setTasks(response.data);
+          setPostedTasks(postedResponse);
+          setAssignedTasks(assignedResponse);
         }
       })
       .catch((error: any) => {
@@ -86,26 +96,46 @@ export default function Dashboard() {
 
   const activeTasks = useMemo(
     () =>
-      tasks.filter(
+      assignedTasks.filter(
         (task) =>
-          task.student_id === user?.id &&
           (task.status === "open" || task.status === "in_progress")
       ).length,
-    [tasks, user?.id]
+    [assignedTasks]
   );
 
   const completedTasks = useMemo(
-    () => tasks.filter((task) => task.student_id === user?.id && task.status === "completed").length,
-    [tasks, user?.id]
+    () => assignedTasks.filter((task) => task.status === "completed").length,
+    [assignedTasks]
   );
 
   const totalEarnings = useMemo(
     () =>
-      tasks
-        .filter((task) => task.student_id === user?.id && task.status === "completed")
+      assignedTasks
+        .filter((task) => task.status === "completed")
         .reduce((sum, task) => sum + Number(task.budget), 0),
-    [tasks, user?.id]
+    [assignedTasks]
   );
+
+  const handleCompleteTask = async (taskId: number) => {
+    setCompletingTaskId(taskId);
+    try {
+      const updatedTask = await taskService.completeTask(taskId);
+      setPostedTasks((current) =>
+        current.map((task) => (task.id === taskId ? updatedTask : task))
+      );
+      setAssignedTasks((current) =>
+        current.map((task) => (task.id === taskId ? updatedTask : task))
+      );
+      setTasks((current) =>
+        current.map((task) => (task.id === taskId ? updatedTask : task))
+      );
+      toast.success("Task marked as completed.");
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to complete task.");
+    } finally {
+      setCompletingTaskId(null);
+    }
+  };
 
   const navItems = [
     {
@@ -188,7 +218,7 @@ export default function Dashboard() {
           </button>
         </div>
 
-         {user?.role === "client" && (
+         {user && (
           <div className={`${isSidebarCollapsed ? "p-3" : "p-4"} border-b border-border`}>
             <Link
               to="/post-task"
@@ -305,9 +335,9 @@ export default function Dashboard() {
                   color: "text-primary",
                 },
                 {
-                  icon: DollarSign,
+                  icon: PhilippinePeso,
                   label: "Total Earnings",
-                  value: `$${totalEarnings.toFixed(2)}`,
+                  value: formatPeso(totalEarnings),
                   color: "text-yellow-400",
                 },
                 {
@@ -373,8 +403,8 @@ export default function Dashboard() {
                           </h3>
                           <div className="flex items-center gap-6 text-foreground/60 flex-wrap">
                             <div className="flex items-center gap-2">
-                              <DollarSign className="w-4 h-4" />
-                              ${Number(task.budget).toFixed(2)}
+                              <PhilippinePeso className="w-4 h-4" />
+                              {formatPeso(task.budget)}
                             </div>
                             <div className="flex items-center gap-2">
                               <Clock className="w-4 h-4" />
@@ -397,6 +427,95 @@ export default function Dashboard() {
               {!loading && recommendedTasks.length === 0 && (
                 <div className="bg-card rounded-2xl p-6 border border-border text-foreground/60">
                   No open tasks available yet.
+                </div>
+              )}
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.5 }}
+              className="mt-8"
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold">Your Posted Tasks</h2>
+              </div>
+
+              {loading ? (
+                <div className="text-foreground/60">Loading posted tasks...</div>
+              ) : postedTasks.length === 0 ? (
+                <div className="bg-card rounded-2xl p-6 border border-border text-foreground/60">
+                  You have not posted any tasks yet.
+                </div>
+              ) : (
+                <div className="grid gap-4">
+                  {postedTasks.map((task) => (
+                    <div
+                      key={task.id}
+                      className="bg-card rounded-2xl p-6 border border-border"
+                    >
+                      <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2 flex-wrap">
+                            <span className="px-3 py-1 rounded-full bg-primary/10 text-primary text-sm">
+                              {task.category}
+                            </span>
+                            <span className="px-3 py-1 rounded-full bg-muted text-foreground/70 text-sm capitalize">
+                              {task.moderation_status}
+                            </span>
+                            <span className="px-3 py-1 rounded-full bg-green-500/10 text-green-400 text-sm capitalize">
+                              {task.status.replace("_", " ")}
+                            </span>
+                          </div>
+                          <Link
+                            to={`/task/${task.id}`}
+                            className="text-xl font-bold hover:text-primary transition-colors"
+                          >
+                            {task.title}
+                          </Link>
+                          <div className="mt-3 flex items-center gap-6 text-foreground/60 flex-wrap">
+                            <div className="flex items-center gap-2">
+                              <PhilippinePeso className="w-4 h-4" />
+                              {formatPeso(task.budget)}
+                            </div>
+                            {task.student && (
+                              <div className="text-sm">
+                                Assigned to{" "}
+                                <Link to={`/profile/${task.student.id}`} className="text-primary hover:underline">
+                                  {task.student.name}
+                                </Link>
+                              </div>
+                            )}
+                            {task.rejection_reason && (
+                              <div className="text-sm text-red-300">
+                                Rejection: {task.rejection_reason}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="flex flex-wrap gap-3">
+                          <Link
+                            to={`/task/${task.id}`}
+                            className="px-4 py-2 rounded-xl bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground transition-all"
+                          >
+                            View
+                          </Link>
+                          {task.status === "in_progress" && task.student_id && (
+                            <button
+                              type="button"
+                              onClick={() => handleCompleteTask(task.id)}
+                              disabled={completingTaskId === task.id}
+                              className="px-4 py-2 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                            >
+                              <ClipboardCheck className="w-4 h-4" />
+                              {completingTaskId === task.id ? "Completing..." : "Mark Completed"}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </motion.div>

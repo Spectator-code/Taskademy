@@ -1,6 +1,6 @@
 import { Link } from "react-router";
 import { motion } from "motion/react";
-import { ArrowLeft, Users, ListChecks, FolderOpen, Shield } from "lucide-react";
+import { ArrowLeft, Users, ListChecks, FolderOpen, Shield, CheckCircle, XCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import {
   CartesianGrid,
@@ -29,38 +29,31 @@ export default function Admin() {
   const [endDate, setEndDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [loading, setLoading] = useState(true);
   const [analyticsLoading, setAnalyticsLoading] = useState(true);
+  const [rejectionReasons, setRejectionReasons] = useState<Record<number, string>>({});
+  const [moderatingTaskId, setModeratingTaskId] = useState<number | null>(null);
 
-  useEffect(() => {
-    let ignore = false;
-
+  const loadAdminData = async () => {
+    setLoading(true);
     Promise.all([
       adminService.getStats(),
       adminService.getUsers(),
       adminService.getTasks(),
     ])
       .then(([statsResponse, usersResponse, tasksResponse]) => {
-        if (ignore) {
-          return;
-        }
-
         setStats(statsResponse);
         setUsers(usersResponse.data.slice(0, 5));
-        setTasks(tasksResponse.data.slice(0, 5));
+        setTasks(tasksResponse.data);
       })
       .catch((error: any) => {
-        if (!ignore) {
-          toast.error(error.response?.data?.message || "Failed to load admin data.");
-        }
+        toast.error(error.response?.data?.message || "Failed to load admin data.");
       })
       .finally(() => {
-        if (!ignore) {
-          setLoading(false);
-        }
+        setLoading(false);
       });
+  };
 
-    return () => {
-      ignore = true;
-    };
+  useEffect(() => {
+    loadAdminData();
   }, []);
 
   useEffect(() => {
@@ -131,10 +124,43 @@ export default function Admin() {
     },
     {
       icon: Shield,
-      label: "Admin Access",
-      value: "Enabled",
+      label: "Pending Review",
+      value: stats?.pending_tasks ?? 0,
     },
   ];
+
+  const handleApprove = async (taskId: number) => {
+    setModeratingTaskId(taskId);
+    try {
+      await adminService.approveTask(taskId);
+      toast.success("Task approved.");
+      await loadAdminData();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to approve task.");
+    } finally {
+      setModeratingTaskId(null);
+    }
+  };
+
+  const handleReject = async (taskId: number) => {
+    const reason = rejectionReasons[taskId]?.trim();
+    if (!reason) {
+      toast.error("Add a rejection reason first.");
+      return;
+    }
+
+    setModeratingTaskId(taskId);
+    try {
+      await adminService.rejectTask(taskId, reason);
+      toast.success("Task rejected and poster notified.");
+      setRejectionReasons((current) => ({ ...current, [taskId]: "" }));
+      await loadAdminData();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to reject task.");
+    } finally {
+      setModeratingTaskId(null);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -301,21 +327,81 @@ export default function Admin() {
                 transition={{ duration: 0.6, delay: 0.3 }}
                 className="bg-card rounded-2xl p-6 border border-border"
               >
-                <h2 className="text-xl font-bold mb-6">Recent Tasks</h2>
+                <h2 className="text-xl font-bold mb-6">Task Moderation</h2>
                 <div className="space-y-4">
                   {tasks.map((task) => (
-                    <div key={task.id} className="flex items-center justify-between p-4 rounded-xl bg-background/50">
-                      <div>
-                        <div className="font-medium mb-1">{task.title}</div>
-                        <div className="text-sm text-foreground/60">{task.client?.name ?? "Client"}</div>
+                    <div key={task.id} className="p-4 rounded-xl bg-background/50 border border-border space-y-4">
+                      <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-3">
+                        <div>
+                          <Link to={`/task/${task.id}`} className="font-medium mb-1 hover:text-primary transition-colors block">
+                            {task.title}
+                          </Link>
+                          <div className="text-sm text-foreground/60">
+                            Posted by {task.client?.name ?? "User"} · {new Date(task.created_at).toLocaleDateString()}
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          <span className="px-3 py-1 rounded-full text-sm bg-primary/10 text-primary capitalize">
+                            {task.status.replace("_", " ")}
+                          </span>
+                          <span
+                            className={`px-3 py-1 rounded-full text-sm capitalize ${
+                              task.moderation_status === "approved"
+                                ? "bg-green-500/10 text-green-400"
+                                : task.moderation_status === "rejected"
+                                ? "bg-red-500/10 text-red-400"
+                                : "bg-yellow-500/10 text-yellow-300"
+                            }`}
+                          >
+                            {task.moderation_status}
+                          </span>
+                        </div>
                       </div>
-                      <div>
-                        <span className="px-3 py-1 rounded-full text-sm bg-primary/10 text-primary capitalize">
-                          {task.status.replace("_", " ")}
-                        </span>
-                      </div>
+
+                      {task.moderation_status === "rejected" && task.rejection_reason && (
+                        <p className="text-sm text-red-300 bg-red-500/10 border border-red-500/20 rounded-xl p-3">
+                          {task.rejection_reason}
+                        </p>
+                      )}
+
+                      {task.moderation_status === "pending" && (
+                        <div className="space-y-3">
+                          <textarea
+                            value={rejectionReasons[task.id] ?? ""}
+                            onChange={(e) =>
+                              setRejectionReasons((current) => ({ ...current, [task.id]: e.target.value }))
+                            }
+                            placeholder="Reason required only when rejecting..."
+                            rows={3}
+                            className="w-full px-4 py-3 rounded-xl bg-input border border-border focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all resize-none text-sm"
+                          />
+                          <div className="flex flex-wrap gap-3">
+                            <button
+                              type="button"
+                              onClick={() => handleApprove(task.id)}
+                              disabled={moderatingTaskId === task.id}
+                              className="px-4 py-2 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all disabled:opacity-50 flex items-center gap-2 text-sm"
+                            >
+                              <CheckCircle className="w-4 h-4" />
+                              Approve
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleReject(task.id)}
+                              disabled={moderatingTaskId === task.id}
+                              className="px-4 py-2 rounded-xl bg-red-500/10 text-red-300 hover:bg-red-500 hover:text-white transition-all disabled:opacity-50 flex items-center gap-2 text-sm"
+                            >
+                              <XCircle className="w-4 h-4" />
+                              Reject
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ))}
+                  {tasks.length === 0 && (
+                    <div className="text-foreground/60">No tasks to review.</div>
+                  )}
                 </div>
               </motion.div>
               </div>

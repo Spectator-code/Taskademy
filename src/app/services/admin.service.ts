@@ -43,4 +43,14 @@ export const adminService = {
     const response = await apiClient.put<User>(`/admin/users/${id}/role`, { role });
     return response.data;
   },
+
+  async approveTask(id: number): Promise<Task> {
+    const response = await apiClient.post<Task>(`/admin/tasks/${id}/approve`);
+    return response.data;
+  },
+
+  async rejectTask(id: number, reason: string): Promise<Task> {
+    const response = await apiClient.post<Task>(`/admin/tasks/${id}/reject`, { reason });
+    return response.data;
+  },
 };

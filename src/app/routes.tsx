@@ -62,7 +62,7 @@ export const router = createBrowserRouter([
   {
     path: "/post-task",
     element: (
-      <ProtectedRoute requiredRole="client">
+      <ProtectedRoute>
         <PostTask />
       </ProtectedRoute>
     ),

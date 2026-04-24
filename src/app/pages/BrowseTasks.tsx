@@ -1,11 +1,12 @@
 /** Page for browsing and filtering available tasks */
 import { Link } from "react-router";
 import { motion } from "motion/react";
-import { Search, Filter, DollarSign, Clock, ArrowLeft } from "lucide-react";
+import { Search, Filter, PhilippinePeso, Clock, ArrowLeft } from "lucide-react";
 import { useEffect, useState } from "react";
 import { taskService } from "../services/task.service";
 import { Task } from "../types/api";
 import { toast } from "sonner";
+import { formatPeso } from "../utils/currency";
 
 export default function BrowseTasks() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -133,8 +134,8 @@ export default function BrowseTasks() {
                     </p>
                     <div className="flex items-center gap-6 text-foreground/60 flex-wrap">
                       <div className="flex items-center gap-2">
-                        <DollarSign className="w-4 h-4" />
-                        ${Number(task.budget).toFixed(2)}
+                        <PhilippinePeso className="w-4 h-4" />
+                        {formatPeso(task.budget)}
                       </div>
                       <div className="flex items-center gap-2">
                         <Clock className="w-4 h-4" />

@@ -23,10 +23,23 @@ export interface Task {
   budget: number;
   deadline: string;
   status: 'open' | 'in_progress' | 'completed' | 'cancelled';
+  moderation_status: 'pending' | 'approved' | 'rejected';
+  rejection_reason?: string | null;
+  archived_at?: string | null;
   client_id: number;
   student_id?: number;
   client?: User;
   student?: User;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TaskApplication {
+  id: number;
+  task_id: number;
+  applicant_id: number;
+  status: 'pending' | 'accepted' | 'rejected';
+  applicant?: User;
   created_at: string;
   updated_at: string;
 }
@@ -56,6 +69,7 @@ export interface AdminStats {
   users: number;
   tasks: number;
   open_tasks: number;
+  pending_tasks: number;
 }
 
 export type RegistrationPeriod = 'daily' | 'weekly' | 'monthly' | 'yearly';

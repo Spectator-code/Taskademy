@@ -1,5 +1,5 @@
 import apiClient from '../config/api';
-import { Task, PaginatedResponse } from '../types/api';
+import { Task, PaginatedResponse, TaskApplication } from '../types/api';
 
 export const taskService = {
   async getTasks(params?: {
@@ -15,6 +15,13 @@ export const taskService = {
 
   async getTaskById(id: number): Promise<Task> {
     const response = await apiClient.get<Task>(`/tasks/${id}`);
+    return response.data;
+  },
+
+  async getMyTasks(scope: 'posted' | 'assigned'): Promise<Task[]> {
+    const response = await apiClient.get<Task[]>('/tasks/mine', {
+      params: { scope },
+    });
     return response.data;
   },
 
@@ -43,8 +50,18 @@ export const taskService = {
     await apiClient.post(`/tasks/${id}/apply`);
   },
 
+  async getTaskApplications(id: number): Promise<TaskApplication[]> {
+    const response = await apiClient.get<TaskApplication[]>(`/tasks/${id}/applications`);
+    return response.data;
+  },
+
   async acceptApplication(taskId: number, studentId: number): Promise<Task> {
     const response = await apiClient.post<Task>(`/tasks/${taskId}/accept`, { student_id: studentId });
+    return response.data;
+  },
+
+  async completeTask(taskId: number): Promise<Task> {
+    const response = await apiClient.post<Task>(`/tasks/${taskId}/complete`);
     return response.data;
   },
 };
