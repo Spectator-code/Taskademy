@@ -1,3 +1,4 @@
+/** Task context for managing task lists, approvals, and rejections */
 import { createContext, useContext, useState, ReactNode } from 'react';
 
 interface Task {
@@ -25,7 +26,7 @@ const initialPendingTasks: Task[] = [
   {
     id: 1,
     title: "Logo Design for Tech Startup",
-    client: "Alex Johnson",
+    client: "Client A",
     budget: "$250",
     posted: "2 hours ago",
     description: "Need a modern, minimalist logo for our tech startup. Should work well in both color and black/white.",
@@ -36,7 +37,7 @@ const initialPendingTasks: Task[] = [
   {
     id: 2,
     title: "Mobile App UI/UX Design",
-    client: "Sarah Williams",
+    client: "Client B",
     budget: "$500",
     posted: "5 hours ago",
     description: "Looking for a talented designer to create UI/UX for our mobile banking app.",
@@ -47,7 +48,7 @@ const initialPendingTasks: Task[] = [
   {
     id: 3,
     title: "Content Writing for Blog",
-    client: "Mike Chen",
+    client: "Client C",
     budget: "$150",
     posted: "1 day ago",
     description: "Need 5 blog posts about emerging tech trends. Each post should be 1000-1500 words.",
@@ -65,7 +66,7 @@ const initialApprovedTasks: Task[] = [
     budget: "$150",
     deadline: "3 days",
     category: "Design",
-    client: "John Smith",
+    client: "Client D",
     posted: "1 day ago",
     status: 'approved'
   },
@@ -76,7 +77,7 @@ const initialApprovedTasks: Task[] = [
     budget: "$75",
     deadline: "5 days",
     category: "Writing",
-    client: "Emma Davis",
+    client: "Client E",
     posted: "2 days ago",
     status: 'approved'
   },
@@ -87,7 +88,7 @@ const initialApprovedTasks: Task[] = [
     budget: "$300",
     deadline: "1 week",
     category: "Development",
-    client: "Michael Brown",
+    client: "Client F",
     posted: "3 days ago",
     status: 'approved'
   },
@@ -98,7 +99,7 @@ const initialApprovedTasks: Task[] = [
     budget: "$100",
     deadline: "2 days",
     category: "Design",
-    client: "Lisa Anderson",
+    client: "Client G",
     posted: "4 days ago",
     status: 'approved'
   },
@@ -109,7 +110,7 @@ const initialApprovedTasks: Task[] = [
     budget: "$50",
     deadline: "4 days",
     category: "Admin",
-    client: "Tom Wilson",
+    client: "Client H",
     posted: "5 days ago",
     status: 'approved'
   },
@@ -120,7 +121,7 @@ const initialApprovedTasks: Task[] = [
     budget: "$120",
     deadline: "6 days",
     category: "Development",
-    client: "David Lee",
+    client: "Client I",
     posted: "6 days ago",
     status: 'approved'
   }

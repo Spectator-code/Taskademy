@@ -1,11 +1,36 @@
+/** Landing page component with hero, features, and journey sections */
 import { Link } from "react-router";
 import { motion } from "motion/react";
-import { Brain, Briefcase, Star, ArrowRight } from "lucide-react";
+import { Brain, Briefcase, Star, ArrowRight, User, Search } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
+import ThemeSwitcher from "../components/ui/ThemeSwitcher";
+import { useEffect } from "react";
 
 export default function Landing() {
   const { isAuthenticated } = useAuth();
   const homeTarget = isAuthenticated ? "/dashboard" : "/";
+
+  useEffect(() => {
+    const handleCopy = (e: ClipboardEvent) => {
+      e.preventDefault();
+    };
+    const handlePaste = (e: ClipboardEvent) => {
+      e.preventDefault();
+    };
+    const handleContextMenu = (e: MouseEvent) => {
+      e.preventDefault();
+    };
+
+    document.addEventListener("copy", handleCopy);
+    document.addEventListener("paste", handlePaste);
+    document.addEventListener("contextmenu", handleContextMenu);
+
+    return () => {
+      document.removeEventListener("copy", handleCopy);
+      document.removeEventListener("paste", handlePaste);
+      document.removeEventListener("contextmenu", handleContextMenu);
+    };
+  }, []);
 
   return (
     <div className="min-h-screen bg-background">
@@ -17,7 +42,8 @@ export default function Landing() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <Link to={homeTarget} className="text-2xl font-bold">
+            <Link to={homeTarget} className="text-2xl font-bold flex items-center gap-4">
+              <img src="/logo.png" alt="Taskademy" className="h-14 w-auto object-contain" />
               Taskademy
             </Link>
           </motion.div>
@@ -45,6 +71,7 @@ export default function Landing() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="flex items-center gap-4"
           >
+            <ThemeSwitcher />
             {isAuthenticated ? (
               <Link
                 to="/dashboard"
@@ -187,75 +214,137 @@ export default function Landing() {
       </section>
 
       {/* How It Works */}
-      <section id="how-it-works" className="py-32">
-        <div className="max-w-7xl mx-auto px-6">
+      <section id="how-it-works" className="py-32 relative overflow-hidden">
+        <div className="absolute inset-0 bg-primary/5 -skew-y-3 origin-right transform translate-y-24" />
+        
+        <div className="max-w-7xl mx-auto px-6 relative">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
-            className="text-center mb-16"
+            className="text-center mb-24"
           >
-            <h2 className="text-4xl md:text-5xl font-bold mb-4">
-              How It Works
+            <h2 className="text-4xl md:text-6xl font-bold mb-4 tracking-tight">
+              Your Journey at Taskademy
             </h2>
+            <p className="text-foreground/60 text-lg max-w-2xl mx-auto">
+              From student to professional in three simple steps.
+            </p>
           </motion.div>
 
-          <div className="grid md:grid-cols-3 gap-12">
+          <div className="grid md:grid-cols-3 gap-12 relative">
+            {/* Connecting Line (Desktop) */}
+            <div className="hidden md:block absolute top-24 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
+
             {[
-              { step: "01", title: "Sign Up", description: "Create your student profile in minutes" },
-              { step: "02", title: "Browse Tasks", description: "Find projects that match your skills" },
-              { step: "03", title: "Start Earning", description: "Complete tasks and build your portfolio" }
+              { 
+                step: "01", 
+                title: "Create Profile", 
+                description: "Showcase your skills, university, and passion. Build a profile that grabs attention.",
+                icon: User,
+                color: "from-blue-500/20 to-cyan-500/20"
+              },
+              { 
+                step: "02", 
+                title: "Pick Your Task", 
+                description: "Filter through real-world projects. From web dev to design, find your perfect match.",
+                icon: Search,
+                color: "from-purple-500/20 to-pink-500/20"
+              },
+              { 
+                step: "03", 
+                title: "Launch Career", 
+                description: "Deliver high-quality work, get paid, and earn verified ratings for your resume.",
+                icon: Star,
+                color: "from-emerald-500/20 to-teal-500/20"
+              }
             ].map((item, index) => (
               <motion.div
                 key={index}
-                initial={{ opacity: 0, x: -30 }}
-                whileInView={{ opacity: 1, x: 0 }}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: index * 0.15 }}
-                className="text-center"
+                transition={{ duration: 0.6, delay: index * 0.2 }}
+                className="relative group"
               >
-                <div className="text-6xl font-bold text-primary/20 mb-6">{item.step}</div>
-                <h3 className="text-2xl font-bold mb-4">{item.title}</h3>
-                <p className="text-foreground/70">{item.description}</p>
+                <div className={`absolute -inset-4 bg-gradient-to-br ${item.color} rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity blur-xl`} />
+                
+                <div className="relative bg-card/80 backdrop-blur-md p-10 rounded-3xl border border-border group-hover:border-primary/30 transition-all text-center">
+                  <div className="w-20 h-20 mx-auto bg-primary/10 rounded-2xl flex items-center justify-center mb-8 group-hover:scale-110 transition-transform">
+                    <item.icon className="w-10 h-10 text-primary" />
+                    <div className="absolute -top-3 -right-3 w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold shadow-lg">
+                      {item.step}
+                    </div>
+                  </div>
+                  
+                  <h3 className="text-2xl font-bold mb-4">{item.title}</h3>
+                  <p className="text-foreground/70 leading-relaxed">
+                    {item.description}
+                  </p>
+                </div>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
+
       {/* Footer */}
-      <footer className="border-t border-border py-12">
+      <footer className="relative border-t border-border bg-card/30 pt-24 pb-12 overflow-hidden">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
+        
         <div className="max-w-7xl mx-auto px-6">
-          <div className="grid md:grid-cols-4 gap-8 mb-8">
-            <div>
-              <div className="text-2xl font-bold mb-4">Taskademy</div>
-              <p className="text-foreground/60">Learn. Work. Earn.</p>
+          <div className="grid grid-cols-2 md:grid-cols-6 gap-12 mb-20">
+            <div className="col-span-2">
+              <div className="text-3xl font-bold mb-6 flex items-center gap-4">
+                <img src="/logo.png" alt="Taskademy" className="h-12 w-auto object-contain" />
+                Taskademy
+              </div>
+              <p className="text-foreground/60 text-lg leading-relaxed max-w-sm mb-8">
+                Empowering students to build real-world experience through meaningful tasks. Learn, work, and earn.
+              </p>
             </div>
-            <div>
-              <h4 className="font-bold mb-4">Platform</h4>
-              <ul className="space-y-2">
-                <li><Link to="/browse" className="text-foreground/60 hover:text-foreground transition-colors">Browse Tasks</Link></li>
-                <li><a href="#how-it-works" className="text-foreground/60 hover:text-foreground transition-colors">How it Works</a></li>
+
+            <div className="col-span-1">
+              <h4 className="font-bold text-lg mb-6 text-foreground">Platform</h4>
+              <ul className="space-y-4">
+                <li><Link to="/browse" className="text-foreground/60 hover:text-primary transition-colors">Browse Tasks</Link></li>
+                <li><a href="#how-it-works" className="text-foreground/60 hover:text-primary transition-colors">How it Works</a></li>
+                <li><Link to="/register" className="text-foreground/60 hover:text-primary transition-colors">Get Started</Link></li>
               </ul>
             </div>
-            <div>
-              <h4 className="font-bold mb-4">Company</h4>
-              <ul className="space-y-2">
-                <li><a href="#" className="text-foreground/60 hover:text-foreground transition-colors">About</a></li>
-                <li><a href="#" className="text-foreground/60 hover:text-foreground transition-colors">Contact</a></li>
+
+            <div className="col-span-1">
+              <h4 className="font-bold text-lg mb-6 text-foreground">Support</h4>
+              <ul className="space-y-4">
+                <li><a href="#" className="text-foreground/60 hover:text-primary transition-colors">Help Center</a></li>
+                <li><a href="#" className="text-foreground/60 hover:text-primary transition-colors">Safety</a></li>
+                <li><a href="#" className="text-foreground/60 hover:text-primary transition-colors">Contact</a></li>
               </ul>
             </div>
-            <div>
-              <h4 className="font-bold mb-4">Legal</h4>
-              <ul className="space-y-2">
-                <li><a href="#" className="text-foreground/60 hover:text-foreground transition-colors">Terms</a></li>
-                <li><a href="#" className="text-foreground/60 hover:text-foreground transition-colors">Privacy</a></li>
+
+            <div className="col-span-1">
+              <h4 className="font-bold text-lg mb-6 text-foreground">Company</h4>
+              <ul className="space-y-4">
+                <li><Link to="/about" className="text-foreground/60 hover:text-primary transition-colors">About Us</Link></li>
+                <li><a href="#" className="text-foreground/60 hover:text-primary transition-colors">Careers</a></li>
+                <li><a href="#" className="text-foreground/60 hover:text-primary transition-colors">Blog</a></li>
+              </ul>
+            </div>
+
+            <div className="col-span-1">
+              <h4 className="font-bold text-lg mb-6 text-foreground">Legal</h4>
+              <ul className="space-y-4">
+                <li><Link to="/terms" className="text-foreground/60 hover:text-primary transition-colors">Terms</Link></li>
+                <li><Link to="/privacy" className="text-foreground/60 hover:text-primary transition-colors">Privacy</Link></li>
+                <li><a href="#" className="text-foreground/60 hover:text-primary transition-colors">Cookies</a></li>
               </ul>
             </div>
           </div>
-          <div className="border-t border-border pt-8 text-center text-foreground/60">
-            <p>&copy; 2026 Taskademy. All rights reserved.</p>
+
+          <div className="border-t border-border pt-8 text-center text-foreground/40 text-sm">
+            <p>&copy; 2026 Taskademy Inc. All rights reserved.</p>
           </div>
         </div>
       </footer>

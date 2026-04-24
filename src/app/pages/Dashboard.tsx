@@ -1,3 +1,4 @@
+/** User dashboard featuring statistics and recommended tasks */
 import { Link, useNavigate } from "react-router";
 import { motion } from "motion/react";
 import {
@@ -21,18 +22,36 @@ import { useAuth } from "../contexts/AuthContext";
 import { taskService } from "../services/task.service";
 import { Task } from "../types/api";
 import { toast } from "sonner";
+import ThemeSwitcher from "../components/ui/ThemeSwitcher";
+import { useApp } from "../contexts/AppContext";
 
 export default function Dashboard() {
   const { user, logout } = useAuth();
+  const { isSidebarCollapsed, toggleSidebar } = useApp();
   const navigate = useNavigate();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
-  const handleLogout = async () => {
+   const handleLogout = async () => {
     await logout();
     navigate("/", { replace: true });
   };
+
+  useEffect(() => {
+    const handleCopy = (e: ClipboardEvent) => e.preventDefault();
+    const handlePaste = (e: ClipboardEvent) => e.preventDefault();
+    const handleContextMenu = (e: MouseEvent) => e.preventDefault();
+
+    document.addEventListener("copy", handleCopy);
+    document.addEventListener("paste", handlePaste);
+    document.addEventListener("contextmenu", handleContextMenu);
+
+    return () => {
+      document.removeEventListener("copy", handleCopy);
+      document.removeEventListener("paste", handlePaste);
+      document.removeEventListener("contextmenu", handleContextMenu);
+    };
+  }, []);
 
   useEffect(() => {
     let ignore = false;
@@ -135,27 +154,33 @@ export default function Dashboard() {
     <div className="min-h-screen bg-background flex">
       <aside
         className={`border-r border-border flex flex-col transition-all duration-300 ease-in-out ${
-          sidebarCollapsed ? "w-20" : "w-64"
+          isSidebarCollapsed ? "w-20" : "w-64"
         }`}
       >
         <div
           className={`border-b border-border flex items-center ${
-            sidebarCollapsed ? "p-4 justify-center" : "p-6 justify-between gap-3"
+            isSidebarCollapsed ? "p-4 justify-center" : "p-6 justify-between gap-3"
           }`}
         >
-          {!sidebarCollapsed && (
-            <Link to="/dashboard" className="text-2xl font-bold truncate">
-              Taskademy
+          {!isSidebarCollapsed && (
+            <Link to="/dashboard" className="text-xl font-bold flex items-center gap-3 min-w-0">
+              <img src="/logo.png" alt="Taskademy" className="h-10 w-10 object-contain flex-shrink-0" />
+              <span className="whitespace-nowrap">Taskademy</span>
+            </Link>
+          )}
+          {isSidebarCollapsed && (
+            <Link to="/dashboard" className="flex justify-center">
+              <img src="/logo.png" alt="Taskademy" className="h-10 w-auto object-contain" />
             </Link>
           )}
           <button
             type="button"
-            onClick={() => setSidebarCollapsed((value) => !value)}
+            onClick={toggleSidebar}
             className="w-10 h-10 rounded-xl flex items-center justify-center text-foreground/60 hover:bg-card hover:text-foreground transition-all"
-            aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-            title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            aria-label={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            title={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
-            {sidebarCollapsed ? (
+            {isSidebarCollapsed ? (
               <PanelLeftOpen className="w-5 h-5" />
             ) : (
               <PanelLeftClose className="w-5 h-5" />
@@ -163,29 +188,29 @@ export default function Dashboard() {
           </button>
         </div>
 
-        {user?.role === "client" && (
-          <div className={`${sidebarCollapsed ? "p-3" : "p-4"} border-b border-border`}>
+         {user?.role === "client" && (
+          <div className={`${isSidebarCollapsed ? "p-3" : "p-4"} border-b border-border`}>
             <Link
               to="/post-task"
               className={`w-full flex items-center justify-center gap-2 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all ${
-                sidebarCollapsed ? "h-11 px-0" : "px-4 py-3"
+                isSidebarCollapsed ? "h-11 px-0" : "px-4 py-3"
               }`}
               title="Post a Task"
               aria-label="Post a Task"
             >
               <span className="text-lg leading-none">+</span>
-              {!sidebarCollapsed && <span>Post a Task</span>}
+              {!isSidebarCollapsed && <span>Post a Task</span>}
             </Link>
           </div>
         )}
 
-        <nav className={`${sidebarCollapsed ? "p-3" : "p-4"} flex-1 space-y-2`}>
+        <nav className={`${isSidebarCollapsed ? "p-3" : "p-4"} flex-1 space-y-2`}>
           {navItems.map((item) => (
             <Link
               key={`${item.to}-${item.label}`}
               to={item.to}
               className={`flex items-center rounded-xl transition-all ${
-                sidebarCollapsed
+                isSidebarCollapsed
                   ? "h-12 justify-center px-0"
                   : "gap-3 px-4 py-3"
               } ${
@@ -197,42 +222,58 @@ export default function Dashboard() {
               aria-label={item.label}
             >
               <item.icon className="w-5 h-5 flex-shrink-0" />
-              {!sidebarCollapsed && <span>{item.label}</span>}
+              {!isSidebarCollapsed && <span>{item.label}</span>}
             </Link>
           ))}
         </nav>
 
-        <div className={`${sidebarCollapsed ? "p-3" : "p-4"} border-t border-border`}>
-          <div
-            className={`flex items-center ${
-              sidebarCollapsed ? "flex-col gap-2" : "justify-between gap-3 px-4 py-3"
-            }`}
-          >
+        <div className="mt-auto border-t border-border bg-card/10 backdrop-blur-sm">
+          <div className={`${isSidebarCollapsed ? "p-3" : "p-4"} space-y-4`}>
+            {/* User Profile Block */}
             <div
-              className={`flex items-center min-w-0 ${
-                sidebarCollapsed ? "justify-center" : "gap-3"
+              className={`flex items-center group cursor-pointer ${
+                isSidebarCollapsed ? "justify-center" : "gap-3 px-3 py-2 rounded-2xl hover:bg-card/50 transition-all"
               }`}
-              title={`${user?.name ?? "User"}${user?.role ? ` - ${user.role}` : ""}`}
+              onClick={() => navigate(user?.id ? `/profile/${user.id}` : "/profile/0")}
+              title={isSidebarCollapsed ? `${user?.name} - ${user?.role}` : ""}
             >
-              <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
-                <User className="w-5 h-5 text-primary" />
+              <div className="relative">
+                <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 border border-primary/20">
+                  <User className="w-5 h-5 text-primary" />
+                </div>
+                <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-background rounded-full" />
               </div>
-              {!sidebarCollapsed && (
-                <div className="min-w-0">
-                  <div className="font-medium truncate">{user?.name ?? "User"}</div>
-                  <div className="text-sm text-foreground/60 capitalize">{user?.role ?? ""}</div>
+              
+              {!isSidebarCollapsed && (
+                <div className="min-w-0 flex-1">
+                  <div className="font-bold text-sm truncate group-hover:text-primary transition-colors">
+                    {user?.name ?? "User"}
+                  </div>
+                  <div className="text-[11px] uppercase tracking-wider font-bold text-foreground/40">
+                    {user?.role ?? "Student"}
+                  </div>
                 </div>
               )}
             </div>
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="w-9 h-9 rounded-xl flex items-center justify-center text-foreground/60 hover:bg-card hover:text-foreground transition-all"
-              aria-label="Logout"
-              title="Logout"
+
+            {/* Action Buttons */}
+            <div
+              className={`flex items-center ${
+                isSidebarCollapsed ? "flex-col gap-3" : "justify-end gap-2 px-2"
+              }`}
             >
-              <LogOut className="w-5 h-5" />
-            </button>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className={`flex items-center justify-center rounded-xl text-foreground/40 hover:text-red-500 hover:bg-red-500/10 transition-all ${
+                  isSidebarCollapsed ? "w-10 h-10" : "w-10 h-10"
+                }`}
+                aria-label="Logout"
+                title="Logout"
+              >
+                <LogOut className="w-5 h-5" />
+              </button>
+            </div>
           </div>
         </div>
       </aside>

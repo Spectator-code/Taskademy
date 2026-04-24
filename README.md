@@ -20,7 +20,7 @@ Taskademy is a student-focused task marketplace built with React, Vite, TypeScri
 
 ## Deployment Notes
 
-Deployment instructions are in [DEPLOYMENT.md](C:/Users/Astral.FX/Desktop/TASKAAA/DEPLOYMENT.md).
+Deployment instructions are in [DEPLOYMENT.md](DEPLOYMENT.md).
 
 ## What Is Still Lacking
 
@@ -31,9 +31,5 @@ Deployment instructions are in [DEPLOYMENT.md](C:/Users/Astral.FX/Desktop/TASKAA
 - Full backend feature tests require `pdo_sqlite` or another configured CI test database to run everywhere.
 
 ## Team
+- Taskademy Development Team
 
-Made by the 3 Musketeers:
-
-- cabanatan
-- villanueva
-- wangdali

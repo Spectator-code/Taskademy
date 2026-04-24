@@ -3,11 +3,16 @@ import { router } from './routes';
 import { AuthProvider } from './contexts/AuthContext';
 import { Toaster } from './components/ui/sonner';
 
+import { AppProvider } from './contexts/AppContext';
+
 export default function App() {
   return (
+    /** Root authentication and application state providers */
     <AuthProvider>
-      <RouterProvider router={router} />
-      <Toaster />
+      <AppProvider>
+        <RouterProvider router={router} />
+        <Toaster />
+      </AppProvider>
     </AuthProvider>
   );
 }

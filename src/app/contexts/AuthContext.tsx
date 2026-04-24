@@ -1,3 +1,4 @@
+/** Authentication context for managing user state and sessions */
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User } from '../types/api';
 import { authService } from '../services/auth.service';

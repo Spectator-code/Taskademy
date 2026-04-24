@@ -41,6 +41,48 @@
   --sidebar-ring: #00FF88;
 }
 
+.minimalist {
+  --background: #ffffff;
+  --foreground: #111111;
+  --primary: #000000;
+  --primary-foreground: #ffffff;
+  --card: #ffffff;
+  --card-foreground: #111111;
+  --secondary: #f4f4f5;
+  --secondary-foreground: #111111;
+  --muted: #f4f4f5;
+  --muted-foreground: #71717a;
+  --accent: #f4f4f5;
+  --accent-foreground: #111111;
+  --border: #e4e4e7;
+  --input: #e4e4e7;
+  --ring: #000000;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #111111;
+  --sidebar-primary: #000000;
+  --sidebar-border: #e4e4e7;
+}
+
+.classic {
+  --background: #fdf6e3;
+  --foreground: #657b83;
+  --primary: #b58900;
+  --primary-foreground: #fdf6e3;
+  --card: #eee8d5;
+  --card-foreground: #657b83;
+  --secondary: #93a1a1;
+  --secondary-foreground: #fdf6e3;
+  --muted: #93a1a1;
+  --muted-foreground: #586e75;
+  --accent: #268bd2;
+  --accent-foreground: #fdf6e3;
+  --border: #d33682;
+  --ring: #b58900;
+  --sidebar: #073642;
+  --sidebar-foreground: #93a1a1;
+  --sidebar-primary: #b58900;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -89,6 +131,11 @@
 
   body {
     @apply bg-background text-foreground;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
   }
 
   /**
@@ -98,6 +145,10 @@
 
   html {
     font-size: var(--font-size);
+  }
+
+  .classic {
+    font-family: "Georgia", serif;
   }
 
   h1 {

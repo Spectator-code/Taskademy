@@ -37,21 +37,21 @@ const portfolioProjects = [
 const reviews = [
   {
     id: 1,
-    author: "Sarah Chen",
+    author: "User A",
     rating: 5,
     text: "Excellent work! Very professional and delivered ahead of schedule.",
     date: "2 weeks ago"
   },
   {
     id: 2,
-    author: "Michael Brown",
+    author: "User B",
     rating: 5,
     text: "Great communication and quality work. Would hire again!",
     date: "1 month ago"
   },
   {
     id: 3,
-    author: "Emma Davis",
+    author: "User C",
     rating: 4,
     text: "Good job overall. Minor revisions needed but delivered well.",
     date: "2 months ago"

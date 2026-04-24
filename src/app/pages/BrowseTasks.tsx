@@ -1,3 +1,4 @@
+/** Page for browsing and filtering available tasks */
 import { Link } from "react-router";
 import { motion } from "motion/react";
 import { Search, Filter, DollarSign, Clock, ArrowLeft } from "lucide-react";

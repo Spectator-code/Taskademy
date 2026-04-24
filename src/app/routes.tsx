@@ -10,12 +10,20 @@ import Messages from "./pages/Messages";
 import Admin from "./pages/Admin";
 import PostTask from "./pages/PostTask";
 import Settings from "./pages/Settings";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
+import AboutUs from "./pages/AboutUs";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 
 export const router = createBrowserRouter([
+  // --- Public Routes ---
   {
     path: "/",
     Component: Landing,
+  },
+  {
+    path: "/about",
+    Component: AboutUs,
   },
   {
     path: "/login",
@@ -25,6 +33,16 @@ export const router = createBrowserRouter([
     path: "/register",
     Component: Register,
   },
+  {
+    path: "/privacy",
+    Component: PrivacyPolicy,
+  },
+  {
+    path: "/terms",
+    Component: TermsOfService,
+  },
+
+  // --- Protected Routes ---
   {
     path: "/dashboard",
     element: (
