@@ -12,10 +12,10 @@ export const userService = {
     return response.data;
   },
 
-  async uploadAvatar(file: File): Promise<{ avatar_url: string }> {
+  async uploadAvatar(file: File): Promise<User> {
     const formData = new FormData();
     formData.append('avatar', file);
-    const response = await apiClient.post<{ avatar_url: string }>('/users/avatar', formData, {
+    const response = await apiClient.post<User>('/users/avatar', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },

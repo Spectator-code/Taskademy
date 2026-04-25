@@ -58,18 +58,18 @@ class UserController extends Controller
             'avatar' => 'required|file|image|max:5120',
         ]);
 
-        $path = $validated['avatar']->store('avatars', 'public');
-        $url = Storage::disk('public')->url($path);
+        $user = $request->user();
+        if ($user->avatar) {
+            Storage::disk('public')->delete($user->avatar);
+        }
 
-        $request->user()->update([
+        $path = $validated['avatar']->store('avatars', 'public');
+
+        $user->update([
             'avatar' => $path,
         ]);
 
-        return response()->json([
-            'avatar' => $path,
-            'url' => $url,
-            'avatar_url' => $url,
-        ], 201);
+        return response()->json($this->serializeUser($user->fresh()), 201);
     }
 
     public function uploadResume(Request $request)

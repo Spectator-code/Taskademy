@@ -5,6 +5,7 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
@@ -28,6 +29,8 @@ class User extends Authenticatable
     ];
 
     protected $hidden = ['password', 'remember_token'];
+
+    protected $appends = ['avatar_url', 'resume_url'];
 
     public function tasksAsClient()
     {
@@ -54,5 +57,19 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function getAvatarUrlAttribute(): ?string
+    {
+        return $this->avatar
+            ? Storage::disk('public')->url($this->avatar)
+            : null;
+    }
+
+    public function getResumeUrlAttribute(): ?string
+    {
+        return $this->resume_file_path
+            ? Storage::disk('public')->url($this->resume_file_path)
+            : null;
     }
 }

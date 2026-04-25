@@ -247,10 +247,10 @@ export default function Messages() {
                   >
                     <div className="flex items-start gap-3">
                       <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 overflow-hidden">
-                        {otherUser?.avatar ? (
+                        {otherUser?.avatar_url ? (
                           <img
-                            src={otherUser.avatar}
-                            alt=""
+                            src={otherUser.avatar_url}
+                            alt={otherUser.name ?? "User"}
                             className="w-full h-full object-cover"
                           />
                         ) : (
@@ -286,8 +286,8 @@ export default function Messages() {
             <>
               <div className="p-6 border-b border-border flex items-center gap-3">
                 <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden">
-                  {selectedUser?.avatar ? (
-                    <img src={selectedUser.avatar} alt="" className="w-full h-full object-cover" />
+                  {selectedUser?.avatar_url ? (
+                    <img src={selectedUser.avatar_url} alt={selectedUser.name ?? "User"} className="w-full h-full object-cover" />
                   ) : (
                     <User className="w-6 h-6 text-primary" />
                   )}

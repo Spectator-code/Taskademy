@@ -10,7 +10,7 @@ import { toast } from "sonner";
 type Tab = "profile" | "notifications" | "security" | "appearance" | "language";
 
 export default function Settings() {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const { theme, setTheme } = useApp();
   const userId = user?.id ?? null;
 
@@ -43,6 +43,7 @@ export default function Settings() {
     setName(user.name ?? "");
     setBio(user.bio ?? "");
     setSkillsText(Array.isArray(user.skills) ? user.skills.join(", ") : "");
+    setAvatarPreview(user.avatar_url ?? null);
   }, [user]);
 
   useEffect(() => {
@@ -56,8 +57,11 @@ export default function Settings() {
     if (!userId) return;
     setSaving(true);
     try {
-      if (avatarFile) await userService.uploadAvatar(avatarFile);
       await userService.updateProfile(userId, { name, bio, skills });
+      if (avatarFile) await userService.uploadAvatar(avatarFile);
+      const refreshedUser = await refreshUser();
+      setAvatarFile(null);
+      setAvatarPreview(refreshedUser?.avatar_url ?? null);
       toast.success("Profile updated successfully!");
     } catch (error: any) {
       toast.error(error?.response?.data?.message ?? "Failed to save settings");
