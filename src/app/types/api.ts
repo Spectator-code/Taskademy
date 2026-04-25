@@ -7,7 +7,6 @@ export interface User {
   bio?: string;
   skills?: string[];
   rating?: number;
-  // Laravel returns snake_case; keep both for compatibility.
   completed_tasks?: number;
   completedTasks?: number;
   created_at: string;

@@ -1,4 +1,4 @@
-/** About Us page showcasing the mission and core values */
+
 import { motion } from "motion/react";
 import { Link } from "react-router";
 import { ArrowLeft, Rocket, Shield, Users, Heart } from "lucide-react";
@@ -29,7 +29,6 @@ export default function AboutUs() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      {/* Hero Section */}
       <section className="relative pt-32 pb-20 overflow-hidden">
         <div className="absolute inset-0 z-0">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-gradient-to-b from-primary/10 via-background to-background" />
@@ -61,8 +60,6 @@ export default function AboutUs() {
           </motion.div>
         </div>
       </section>
-
-      {/* Our Story / Human Connection */}
       <section className="py-24 bg-card/30">
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid md:grid-cols-2 gap-16 items-center">
@@ -74,7 +71,7 @@ export default function AboutUs() {
             >
               <h2 className="text-4xl font-bold">The Heart Behind the Brand</h2>
               <p className="text-lg text-foreground/70 leading-relaxed">
-                We've all been there—sitting in a lecture hall, wondering if our theories would ever survive the pressure of a real project. We saw millions of talented students struggling with student debt while companies were starving for fresh, energetic talent.
+                We've all been thereÃ¢â‚¬â€sitting in a lecture hall, wondering if our theories would ever survive the pressure of a real project. We saw millions of talented students struggling with student debt while companies were starving for fresh, energetic talent.
               </p>
               <p className="text-lg text-foreground/70 leading-relaxed">
                 Taskademy is our answer. It's more than a freelance site; it's a personality. It's bold, it's empathetic, and it's built by people who believe that <strong>experience should be accessible, not just earned after graduation.</strong>
@@ -102,8 +99,6 @@ export default function AboutUs() {
           </div>
         </div>
       </section>
-
-      {/* Core Values */}
       <section className="py-24">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
@@ -133,8 +128,6 @@ export default function AboutUs() {
           </div>
         </div>
       </section>
-
-      {/* Join the Movement CTA */}
       <section className="py-24 relative overflow-hidden">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-primary/5 blur-[120px] rounded-full" />
         <div className="max-w-4xl mx-auto px-6 text-center relative z-10">
@@ -152,8 +145,6 @@ export default function AboutUs() {
           </div>
         </div>
       </section>
-
-      {/* Footer Branding */}
       <footer className="py-12 border-t border-border text-center text-foreground/40 text-sm">
         <p>&copy; 2026 Taskademy Inc. All rights reserved.</p>
       </footer>

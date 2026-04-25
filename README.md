@@ -1,35 +1,34 @@
 # Taskademy
 
-Taskademy is a student-focused task marketplace built with React, Vite, TypeScript, and a Laravel API. The frontend in this repository includes authentication flows, live task browsing, task detail pages, profile/settings pages, and an admin overview.
+Taskademy is a student task marketplace with a React frontend and a Laravel API. The repository contains the web client, the backend service, and the supporting configuration needed for local development.
 
-## Stack
+## Project Structure
 
-- React
-- TypeScript
-- Vite
-- Tailwind CSS
-- Axios
-- Laravel API integration
+- `src/`: React application built with Vite and TypeScript
+- `taskademy-api/`: Laravel API for authentication, tasks, messaging, profiles, and admin features
+- `public/`: static frontend assets
 
-## Run The Frontend
+## Frontend Setup
 
 1. Install dependencies with `npm install`
-2. Create a root `.env` file with:
+2. Create a root `.env` file:
    - `VITE_API_URL=http://localhost:8000/api`
-3. Start the app with `npm run dev`
+3. Start the frontend with `npm run dev`
 
-## Deployment Notes
+## Backend Setup
 
-Deployment instructions are in [DEPLOYMENT.md](DEPLOYMENT.md).
+1. Go to `taskademy-api/`
+2. Install PHP dependencies with Composer
+3. Copy `.env.example` to `.env`
+4. Configure the database and app settings
+5. Run `php artisan migrate --seed`
+6. Start the API with `php artisan serve`
 
-## What Is Still Lacking
+## Scripts
 
-- The backend API lives in a separate local Laravel workspace and is not yet integrated into this root Git repository.
-- The `Messages` page is still using mock conversation data.
-- Parts of `Profile` and resume handling are still UI-only and are not backed by persistent API endpoints.
-- Production infrastructure is still needed: hosting, database provisioning, Laravel process setup, storage wiring, and final domain/env configuration.
-- Full backend feature tests require `pdo_sqlite` or another configured CI test database to run everywhere.
+- Root: `npm run dev`, `npm run build`
+- API: `php artisan serve`, `php artisan test`
 
-## Team
-- Taskademy Development Team
+## Deployment
 
+Deployment notes are in [DEPLOYMENT.md](DEPLOYMENT.md).

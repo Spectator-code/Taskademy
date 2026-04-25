@@ -1,4 +1,4 @@
-/** User login page with credentials and social authentication options */
+
 import { Link, useNavigate } from "react-router";
 import { motion } from "motion/react";
 import { ArrowLeft, Eye, EyeOff, Github, Chrome } from "lucide-react";
@@ -88,7 +88,7 @@ export default function Login() {
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
+                  placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
                   className="w-full px-4 py-3 rounded-xl bg-input border border-border focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all pr-12"
                   required
                 />
@@ -123,7 +123,6 @@ export default function Login() {
               {loading ? "Logging in..." : "Login"}
             </button>
           </form>
-
 
           <div className="mt-8 text-center">
             <p className="text-foreground/60">

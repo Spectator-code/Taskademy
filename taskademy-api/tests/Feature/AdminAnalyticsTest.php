@@ -7,8 +7,6 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
 use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use Tests\TestCase;
-
-#[RequiresPhpExtension('pdo_sqlite')]
 class AdminAnalyticsTest extends TestCase
 {
     use RefreshDatabase;

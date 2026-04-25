@@ -210,8 +210,6 @@ export default function Profile() {
           <ArrowLeft className="w-4 h-4" />
           Back to Dashboard
         </Link>
-
-        {/* Profile Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -329,8 +327,6 @@ export default function Profile() {
             </div>
           </div>
         </motion.div>
-
-        {/* Tabs */}
         <div className="mb-8">
           <div className="flex gap-4 border-b border-border overflow-x-auto">
             <button
@@ -375,8 +371,6 @@ export default function Profile() {
             </button>
           </div>
         </div>
-
-        {/* Portfolio Tab */}
         {activeTab === 'portfolio' && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -418,8 +412,6 @@ export default function Profile() {
             </div>
           </motion.div>
         )}
-
-        {/* Reviews Tab */}
         {activeTab === 'reviews' && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -447,8 +439,6 @@ export default function Profile() {
             </div>
           </motion.div>
         )}
-
-        {/* Completed Tasks Tab */}
         {activeTab === 'tasks' && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -471,8 +461,6 @@ export default function Profile() {
             </div>
           </motion.div>
         )}
-
-        {/* Resume Tab */}
         {activeTab === 'resume' && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -559,7 +547,6 @@ export default function Profile() {
             {resumeMode === 'manual' && (
               <div className="bg-card rounded-2xl p-8 border border-border">
                 <div className="space-y-8">
-                  {/* Summary */}
                   <div>
                     <label className="block mb-3 font-medium">Professional Summary</label>
                     <textarea
@@ -570,8 +557,6 @@ export default function Profile() {
                       rows={4}
                     />
                   </div>
-
-                  {/* Experience */}
                   <div>
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="text-xl font-bold">Work Experience</h3>
@@ -622,8 +607,6 @@ export default function Profile() {
                       ))}
                     </div>
                   </div>
-
-                  {/* Education */}
                   <div>
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="text-xl font-bold">Education</h3>
@@ -669,8 +652,6 @@ export default function Profile() {
                       ))}
                     </div>
                   </div>
-
-                  {/* Skills */}
                   <div>
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="text-xl font-bold">Skills</h3>
@@ -702,8 +683,6 @@ export default function Profile() {
                       ))}
                     </div>
                   </div>
-
-                  {/* Actions */}
                   <div className="flex gap-4 pt-4">
                     <button className="px-6 py-3 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all">
                       Save Resume

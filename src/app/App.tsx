@@ -7,7 +7,7 @@ import { AppProvider } from './contexts/AppContext';
 
 export default function App() {
   return (
-    /** Root authentication and application state providers */
+    
     <AuthProvider>
       <AppProvider>
         <RouterProvider router={router} />

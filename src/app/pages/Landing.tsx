@@ -1,4 +1,3 @@
-/** Landing page component with hero, features, and journey sections */
 import { Link, useLocation, useNavigate } from "react-router";
 import { motion } from "motion/react";
 import { Brain, Briefcase, Star, ArrowRight, User, Search } from "lucide-react";
@@ -52,7 +51,6 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 backdrop-blur-lg">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <motion.div
@@ -115,8 +113,6 @@ export default function Landing() {
           </motion.div>
         </div>
       </header>
-
-      {/* Hero Section */}
       <section className="relative min-h-screen flex items-center pt-20">
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute top-1/4 -left-48 w-96 h-96 bg-primary/10 rounded-full blur-3xl" />
@@ -172,8 +168,6 @@ export default function Landing() {
           </motion.div>
         </div>
       </section>
-
-      {/* Features Section */}
       <section className="relative py-32 bg-secondary/30">
         <div className="max-w-7xl mx-auto px-6">
           <motion.div
@@ -229,8 +223,6 @@ export default function Landing() {
           </div>
         </div>
       </section>
-
-      {/* How It Works */}
       <section id="how-it-works" className="py-32 relative overflow-hidden">
         <div className="absolute inset-0 bg-primary/5 -skew-y-3 origin-right transform translate-y-24" />
         
@@ -251,7 +243,6 @@ export default function Landing() {
           </motion.div>
 
           <div className="grid md:grid-cols-3 gap-12 relative">
-            {/* Connecting Line (Desktop) */}
             <div className="hidden md:block absolute top-24 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
 
             {[
@@ -305,9 +296,6 @@ export default function Landing() {
           </div>
         </div>
       </section>
-
-
-      {/* Footer */}
       <footer className="relative border-t border-border bg-card/30 pt-24 pb-12 overflow-hidden">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
         

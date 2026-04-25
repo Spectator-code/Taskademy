@@ -7,4 +7,6 @@ taskademy-api/.env
 taskademy-api/vendor/
 taskademy-api/.phpunit.result.cache
 taskademy-api/.git-backup/
+taskademy-api/database/*.sqlite
+taskademy-api/storage/framework/views/*.php
 .codex-local-logs/

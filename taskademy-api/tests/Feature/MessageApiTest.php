@@ -10,8 +10,6 @@ use Illuminate\Support\Facades\Event;
 use Laravel\Sanctum\Sanctum;
 use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use Tests\TestCase;
-
-#[RequiresPhpExtension('pdo_sqlite')]
 class MessageApiTest extends TestCase
 {
     use RefreshDatabase;

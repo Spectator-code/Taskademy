@@ -16,33 +16,25 @@ export default function Settings() {
 
   const [activeTab, setActiveTab] = useState<Tab>("profile");
   const [saving, setSaving] = useState(false);
-
-  // Profile
   const [name, setName] = useState("");
   const [bio, setBio] = useState("");
   const [skillsText, setSkillsText] = useState("");
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
-
-  // Notifications
   const [emailNotifs, setEmailNotifs] = useState(true);
   const [taskUpdates, setTaskUpdates] = useState(true);
   const [messageAlerts, setMessageAlerts] = useState(true);
   const [marketingEmails, setMarketingEmails] = useState(false);
-
-  // Security
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
   const [showCurrentPw, setShowCurrentPw] = useState(false);
   const [showNewPw, setShowNewPw] = useState(false);
   const [twoFactor, setTwoFactor] = useState(false);
-
-  // Language
   const [language, setLanguage] = useState("en");
 
   const skills = useMemo(
-    () => skillsText.split(",").map((s) => s.trim()).filter(Boolean),
+    () => skillsText.split(",").map((value) => value.trim()).filter(Boolean),
     [skillsText]
   );
 
@@ -67,8 +59,8 @@ export default function Settings() {
       if (avatarFile) await userService.uploadAvatar(avatarFile);
       await userService.updateProfile(userId, { name, bio, skills });
       toast.success("Profile updated successfully!");
-    } catch (e: any) {
-      toast.error(e?.response?.data?.message ?? "Failed to save settings");
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message ?? "Failed to save settings");
     } finally {
       setSaving(false);
     }
@@ -124,7 +116,6 @@ export default function Settings() {
         <p className="text-foreground/60 mb-8">Manage your account preferences.</p>
 
         <div className="flex flex-col md:flex-row gap-8">
-          {/* Sidebar Tabs */}
           <nav className="md:w-56 flex md:flex-col gap-2 overflow-x-auto pb-2 md:pb-0">
             {tabs.map((tab) => (
               <button
@@ -142,14 +133,12 @@ export default function Settings() {
             ))}
           </nav>
 
-          {/* Content */}
           <motion.div
             key={activeTab}
             initial={{ opacity: 0, x: 10 }}
             animate={{ opacity: 1, x: 0 }}
             className="flex-1 bg-card rounded-2xl p-8 border border-border"
           >
-            {/* PROFILE TAB */}
             {activeTab === "profile" && (
               <div className="space-y-6">
                 <div>
@@ -157,7 +146,6 @@ export default function Settings() {
                   <p className="text-foreground/60 text-sm">This is how others see you on the platform.</p>
                 </div>
 
-                {/* Avatar Preview */}
                 <div className="flex items-center gap-6">
                   <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden border-2 border-border">
                     {avatarPreview ? (
@@ -169,7 +157,12 @@ export default function Settings() {
                   <div>
                     <label className="px-4 py-2 rounded-xl bg-muted text-sm font-medium cursor-pointer hover:bg-muted/80 transition-all">
                       Change Avatar
-                      <input type="file" accept="image/*" onChange={(e) => setAvatarFile(e.target.files?.[0] ?? null)} className="hidden" />
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => setAvatarFile(e.target.files?.[0] ?? null)}
+                        className="hidden"
+                      />
                     </label>
                     <p className="text-xs text-foreground/40 mt-2">JPG, PNG. Max 2MB.</p>
                   </div>
@@ -188,29 +181,46 @@ export default function Settings() {
 
                 <div>
                   <label className="block mb-2 text-sm font-medium">Bio</label>
-                  <textarea value={bio} onChange={(e) => setBio(e.target.value)} rows={4} maxLength={300} className={`${inputClass} resize-none`} placeholder="Tell us about yourself..." />
+                  <textarea
+                    value={bio}
+                    onChange={(e) => setBio(e.target.value)}
+                    rows={4}
+                    maxLength={300}
+                    className={`${inputClass} resize-none`}
+                    placeholder="Tell us about yourself..."
+                  />
                   <p className="text-xs text-foreground/40 mt-1 text-right">{bio.length}/300</p>
                 </div>
 
                 <div>
                   <label className="block mb-2 text-sm font-medium">Skills</label>
-                  <input value={skillsText} onChange={(e) => setSkillsText(e.target.value)} placeholder="e.g. React, Laravel, UI Design" className={inputClass} />
+                  <input
+                    value={skillsText}
+                    onChange={(e) => setSkillsText(e.target.value)}
+                    placeholder="e.g. React, Laravel, UI Design"
+                    className={inputClass}
+                  />
                   {skills.length > 0 && (
                     <div className="flex flex-wrap gap-2 mt-3">
-                      {skills.map((s) => (
-                        <span key={s} className="px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium">{s}</span>
+                      {skills.map((skill) => (
+                        <span key={skill} className="px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium">
+                          {skill}
+                        </span>
                       ))}
                     </div>
                   )}
                 </div>
 
-                <button onClick={onSaveProfile} disabled={saving || !userId} className="w-full px-6 py-3 rounded-xl bg-primary text-primary-foreground font-bold hover:bg-primary/90 transition-all disabled:opacity-50 shadow-lg shadow-primary/20">
+                <button
+                  onClick={onSaveProfile}
+                  disabled={saving || !userId}
+                  className="w-full px-6 py-3 rounded-xl bg-primary text-primary-foreground font-bold hover:bg-primary/90 transition-all disabled:opacity-50 shadow-lg shadow-primary/20"
+                >
                   {saving ? "Saving..." : "Save Profile"}
                 </button>
               </div>
             )}
 
-            {/* NOTIFICATIONS TAB */}
             {activeTab === "notifications" && (
               <div className="space-y-6">
                 <div>
@@ -237,7 +247,6 @@ export default function Settings() {
               </div>
             )}
 
-            {/* SECURITY TAB */}
             {activeTab === "security" && (
               <div className="space-y-6">
                 <div>
@@ -294,7 +303,6 @@ export default function Settings() {
               </div>
             )}
 
-            {/* APPEARANCE TAB */}
             {activeTab === "appearance" && (
               <div className="space-y-6">
                 <div>
@@ -302,22 +310,21 @@ export default function Settings() {
                   <p className="text-foreground/60 text-sm">Customize how Taskademy looks for you.</p>
                 </div>
                 <div className="grid grid-cols-3 gap-4">
-                  {(["modern", "minimalist", "classic"] as const).map((t) => (
+                  {(["modern", "minimalist", "classic"] as const).map((value) => (
                     <button
-                      key={t}
-                      onClick={() => setTheme(t)}
+                      key={value}
+                      onClick={() => setTheme(value)}
                       className={`p-6 rounded-2xl border-2 transition-all text-center capitalize font-medium ${
-                        theme === t ? "border-primary bg-primary/10 text-primary" : "border-border text-foreground/60 hover:border-primary/50"
+                        theme === value ? "border-primary bg-primary/10 text-primary" : "border-border text-foreground/60 hover:border-primary/50"
                       }`}
                     >
-                      {t}
+                      {value}
                     </button>
                   ))}
                 </div>
               </div>
             )}
 
-            {/* LANGUAGE TAB */}
             {activeTab === "language" && (
               <div className="space-y-6">
                 <div>
@@ -331,20 +338,18 @@ export default function Settings() {
                     { value: "es", label: "Spanish" },
                     { value: "ja", label: "Japanese" },
                     { value: "ko", label: "Korean" },
-                  ].map((lang) => (
+                  ].map((option) => (
                     <button
-                      key={lang.value}
-                      onClick={() => setLanguage(lang.value)}
+                      key={option.value}
+                      onClick={() => setLanguage(option.value)}
                       className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border transition-all ${
-                        language === lang.value
+                        language === option.value
                           ? "border-primary bg-primary/10 text-primary font-medium"
                           : "border-border text-foreground/60 hover:border-primary/50 hover:bg-card"
                       }`}
                     >
-                      <span>{lang.label}</span>
-                      {language === lang.value && (
-                        <div className="w-2 h-2 rounded-full bg-primary" />
-                      )}
+                      <span>{option.label}</span>
+                      {language === option.value && <div className="w-2 h-2 rounded-full bg-primary" />}
                     </button>
                   ))}
                 </div>

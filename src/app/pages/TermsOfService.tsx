@@ -1,4 +1,4 @@
-/** Terms of Service page displaying legal agreements */
+
 import { motion } from "motion/react";
 import { Link } from "react-router";
 import { ArrowLeft } from "lucide-react";

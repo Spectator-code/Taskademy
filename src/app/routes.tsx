@@ -16,7 +16,6 @@ import AboutUs from "./pages/AboutUs";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 
 export const router = createBrowserRouter([
-  // --- Public Routes ---
   {
     path: "/",
     Component: Landing,
@@ -41,8 +40,6 @@ export const router = createBrowserRouter([
     path: "/terms",
     Component: TermsOfService,
   },
-
-  // --- Protected Routes ---
   {
     path: "/dashboard",
     element: (

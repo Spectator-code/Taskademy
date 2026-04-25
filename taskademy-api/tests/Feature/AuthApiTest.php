@@ -6,8 +6,6 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use Tests\TestCase;
-
-#[RequiresPhpExtension('pdo_sqlite')]
 class AuthApiTest extends TestCase
 {
     use RefreshDatabase;

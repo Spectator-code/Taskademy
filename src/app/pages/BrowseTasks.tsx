@@ -1,4 +1,4 @@
-/** Page for browsing and filtering available tasks */
+
 import { Link } from "react-router";
 import { motion } from "motion/react";
 import { Search, Filter, PhilippinePeso, Clock, ArrowLeft } from "lucide-react";

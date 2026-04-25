@@ -1,4 +1,4 @@
-/** Application context for managing theme, sidebar, and search state */
+
 import React, { createContext, useContext, useState, useEffect } from "react";
 
 type Theme = "modern" | "minimalist" | "classic";
@@ -42,7 +42,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (theme !== "modern") {
       root.classList.add(theme);
     }
-    // Modern is the default base theme (dark)
     if (theme === "modern") {
       root.classList.add("dark");
     }

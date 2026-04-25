@@ -69,7 +69,6 @@ export default function PostTask() {
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Task Title */}
             <div className="bg-card rounded-2xl p-6 border border-border">
               <label htmlFor="title" className="block mb-3">
                 Task Title
@@ -85,8 +84,6 @@ export default function PostTask() {
                 required
               />
             </div>
-
-            {/* Category */}
             <div className="bg-card rounded-2xl p-6 border border-border">
               <label htmlFor="category" className="block mb-3">
                 <Tag className="inline w-4 h-4 mr-2" />
@@ -108,8 +105,6 @@ export default function PostTask() {
                 <option value="Other">Other</option>
               </select>
             </div>
-
-            {/* Description */}
             <div className="bg-card rounded-2xl p-6 border border-border">
               <label htmlFor="description" className="block mb-3">
                 Description
@@ -125,8 +120,6 @@ export default function PostTask() {
                 required
               />
             </div>
-
-            {/* Requirements */}
             <div className="bg-card rounded-2xl p-6 border border-border">
               <label htmlFor="requirements" className="block mb-3">
                 Requirements
@@ -142,8 +135,6 @@ export default function PostTask() {
                 required
               />
             </div>
-
-            {/* Budget and Deadline */}
             <div className="grid md:grid-cols-2 gap-6">
               <div className="bg-card rounded-2xl p-6 border border-border">
                 <label htmlFor="budget" className="block mb-3">
@@ -151,7 +142,7 @@ export default function PostTask() {
                   Budget
                 </label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-foreground/60">₱</span>
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-foreground/60">Ã¢â€šÂ±</span>
                   <input
                     id="budget"
                     name="budget"
@@ -181,8 +172,6 @@ export default function PostTask() {
                 />
               </div>
             </div>
-
-            {/* Submit Button */}
             <div className="flex gap-4">
               <button
                 type="submit"
@@ -199,8 +188,6 @@ export default function PostTask() {
               </Link>
             </div>
           </form>
-
-          {/* Info Box */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -210,19 +197,19 @@ export default function PostTask() {
             <h3 className="font-bold mb-2 text-primary">Tips for posting a great task</h3>
             <ul className="space-y-2 text-foreground/80">
               <li className="flex items-start gap-2">
-                <span className="text-primary mt-1">•</span>
+                <span className="text-primary mt-1">Ã¢â‚¬Â¢</span>
                 <span>Be clear and specific about what you need</span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-primary mt-1">•</span>
+                <span className="text-primary mt-1">Ã¢â‚¬Â¢</span>
                 <span>Set a realistic budget and deadline</span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-primary mt-1">•</span>
+                <span className="text-primary mt-1">Ã¢â‚¬Â¢</span>
                 <span>List all requirements upfront to avoid confusion</span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-primary mt-1">•</span>
+                <span className="text-primary mt-1">Ã¢â‚¬Â¢</span>
                 <span>Respond quickly to applications to attract top talent</span>
               </li>
             </ul>

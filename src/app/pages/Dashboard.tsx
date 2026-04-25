@@ -1,4 +1,4 @@
-/** User dashboard featuring statistics and recommended tasks */
+
 import { Link, useNavigate } from "react-router";
 import { motion } from "motion/react";
 import {
@@ -259,7 +259,6 @@ export default function Dashboard() {
 
         <div className="mt-auto border-t border-border bg-card/10 backdrop-blur-sm">
           <div className={`${isSidebarCollapsed ? "p-3" : "p-4"} space-y-4`}>
-            {/* User Profile Block */}
             <div
               className={`flex items-center group cursor-pointer ${
                 isSidebarCollapsed ? "justify-center" : "gap-3 px-3 py-2 rounded-2xl hover:bg-card/50 transition-all"
@@ -285,8 +284,6 @@ export default function Dashboard() {
                 </div>
               )}
             </div>
-
-            {/* Action Buttons */}
             <div
               className={`flex items-center ${
                 isSidebarCollapsed ? "flex-col gap-3" : "justify-end gap-2 px-2"
