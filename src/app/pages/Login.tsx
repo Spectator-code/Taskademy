@@ -1,4 +1,3 @@
-
 import { Link, useNavigate } from "react-router";
 import { motion } from "motion/react";
 import { ArrowLeft, Eye, EyeOff, Github, Chrome } from "lucide-react";
@@ -88,7 +87,7 @@ export default function Login() {
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
+                  placeholder={"\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022"}
                   className="w-full px-4 py-3 rounded-xl bg-input border border-border focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all pr-12"
                   required
                 />

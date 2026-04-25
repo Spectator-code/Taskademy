@@ -170,7 +170,7 @@ export default function PostTask() {
                   Budget
                 </label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-foreground/60">Ã¢â€šÂ±</span>
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-foreground/60">{"\u20b1"}</span>
                   <input
                     id="budget"
                     name="budget"
@@ -225,19 +225,19 @@ export default function PostTask() {
             <h3 className="font-bold mb-2 text-primary">Tips for posting a great task</h3>
             <ul className="space-y-2 text-foreground/80">
               <li className="flex items-start gap-2">
-                <span className="text-primary mt-1">Ã¢â‚¬Â¢</span>
+                <span className="text-primary mt-1">{"\u2022"}</span>
                 <span>Be clear and specific about what you need</span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-primary mt-1">Ã¢â‚¬Â¢</span>
+                <span className="text-primary mt-1">{"\u2022"}</span>
                 <span>Set a realistic budget and deadline</span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-primary mt-1">Ã¢â‚¬Â¢</span>
+                <span className="text-primary mt-1">{"\u2022"}</span>
                 <span>List all requirements upfront to avoid confusion</span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-primary mt-1">Ã¢â‚¬Â¢</span>
+                <span className="text-primary mt-1">{"\u2022"}</span>
                 <span>Respond quickly to applications to attract top talent</span>
               </li>
             </ul>

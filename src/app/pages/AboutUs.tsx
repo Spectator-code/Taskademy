@@ -1,4 +1,3 @@
-
 import { motion } from "motion/react";
 import { Link } from "react-router";
 import { ArrowLeft, Rocket, Shield, Users, Heart } from "lucide-react";
@@ -71,7 +70,7 @@ export default function AboutUs() {
             >
               <h2 className="text-4xl font-bold">The Heart Behind the Brand</h2>
               <p className="text-lg text-foreground/70 leading-relaxed">
-                We've all been thereÃ¢â‚¬â€sitting in a lecture hall, wondering if our theories would ever survive the pressure of a real project. We saw millions of talented students struggling with student debt while companies were starving for fresh, energetic talent.
+                We've all been there{"\u2014"}sitting in a lecture hall, wondering if our theories would ever survive the pressure of a real project. We saw millions of talented students struggling with student debt while companies were starving for fresh, energetic talent.
               </p>
               <p className="text-lg text-foreground/70 leading-relaxed">
                 Taskademy is our answer. It's more than a freelance site; it's a personality. It's bold, it's empathetic, and it's built by people who believe that <strong>experience should be accessible, not just earned after graduation.</strong>
