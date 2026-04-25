@@ -1,5 +1,5 @@
 /** Landing page component with hero, features, and journey sections */
-import { Link } from "react-router";
+import { Link, useLocation, useNavigate } from "react-router";
 import { motion } from "motion/react";
 import { Brain, Briefcase, Star, ArrowRight, User, Search } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
@@ -9,6 +9,24 @@ import { useEffect } from "react";
 export default function Landing() {
   const { isAuthenticated } = useAuth();
   const homeTarget = isAuthenticated ? "/dashboard" : "/";
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleHomeClick = (e: any) => {
+    if (isAuthenticated) {
+      e.preventDefault();
+      navigate("/dashboard");
+      return;
+    }
+
+    if (location.pathname === "/") {
+      e.preventDefault();
+      if (location.hash) {
+        window.history.replaceState(null, "", "/");
+      }
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
 
   useEffect(() => {
     const handleCopy = (e: ClipboardEvent) => {
@@ -42,9 +60,8 @@ export default function Landing() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <Link to={homeTarget} className="text-2xl font-bold flex items-center gap-4">
-              <img src="/logo.png" alt="Taskademy" className="h-14 w-auto object-contain" />
-              Taskademy
+            <Link to={homeTarget} onClick={handleHomeClick} className="text-2xl font-bold flex items-center gap-4">
+              <img src="/logo.png" alt="Taskademy" className="h-70 w-70 object-contain" />
             </Link>
           </motion.div>
 
@@ -54,7 +71,7 @@ export default function Landing() {
             transition={{ duration: 0.6, delay: 0.1 }}
             className="hidden md:flex items-center gap-8"
           >
-            <Link to={homeTarget} className="text-foreground/80 hover:text-foreground transition-colors">
+            <Link to={homeTarget} onClick={handleHomeClick} className="text-foreground/80 hover:text-foreground transition-colors">
               Home
             </Link>
             <Link to="/browse" className="text-foreground/80 hover:text-foreground transition-colors">
@@ -298,8 +315,8 @@ export default function Landing() {
           <div className="grid grid-cols-2 md:grid-cols-6 gap-12 mb-20">
             <div className="col-span-2">
               <div className="text-3xl font-bold mb-6 flex items-center gap-4">
-                <img src="/logo.png" alt="Taskademy" className="h-12 w-auto object-contain" />
-                Taskademy
+                <img src="/logo.png" alt="Taskademy" className="h-30 w-auto object-contain" />
+                
               </div>
               <p className="text-foreground/60 text-lg leading-relaxed max-w-sm mb-8">
                 Empowering students to build real-world experience through meaningful tasks. Learn, work, and earn.
