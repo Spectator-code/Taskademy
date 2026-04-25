@@ -18,6 +18,9 @@ class User extends Authenticatable
         'password',
         'role',
         'avatar',
+        'resume_file_path',
+        'resume_file_name',
+        'resume_manual',
         'bio',
         'skills',
         'rating',
@@ -46,6 +49,7 @@ class User extends Authenticatable
     {
         return [
             'skills' => 'array',
+            'resume_manual' => 'array',
             'rating' => 'decimal:2',
             'email_verified_at' => 'datetime',
             'password' => 'hashed',

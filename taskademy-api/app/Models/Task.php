@@ -11,6 +11,8 @@ class Task extends Model
         'category',
         'description',
         'requirements',
+        'image_path',
+        'image_name',
         'budget',
         'deadline',
         'status',

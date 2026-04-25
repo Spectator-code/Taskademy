@@ -4,13 +4,39 @@ export interface User {
   email: string;
   role: 'student' | 'client' | 'admin';
   avatar?: string;
+  avatar_url?: string | null;
+  resume_file_path?: string | null;
+  resume_file_name?: string | null;
+  resume_url?: string | null;
+  resume_manual?: ResumeManual | null;
   bio?: string;
   skills?: string[];
   rating?: number;
   completed_tasks?: number;
   completedTasks?: number;
+  tasksAsStudent?: Task[];
   created_at: string;
   updated_at: string;
+}
+
+export interface ResumeExperience {
+  company: string;
+  position: string;
+  duration: string;
+  description: string;
+}
+
+export interface ResumeEducation {
+  school: string;
+  degree: string;
+  year: string;
+}
+
+export interface ResumeManual {
+  summary: string;
+  experience: ResumeExperience[];
+  education: ResumeEducation[];
+  skills: string[];
 }
 
 export interface Task {
@@ -19,6 +45,9 @@ export interface Task {
   category: string;
   description: string;
   requirements?: string;
+  image_path?: string | null;
+  image_name?: string | null;
+  image_url?: string | null;
   budget: number;
   deadline: string;
   status: 'open' | 'in_progress' | 'completed' | 'cancelled';

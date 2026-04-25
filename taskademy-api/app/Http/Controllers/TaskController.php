@@ -6,6 +6,7 @@ use App\Models\Task;
 use App\Models\TaskApplication;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class TaskController extends Controller
 {
@@ -36,7 +37,7 @@ class TaskController extends Controller
             $query->where('budget', '<=', $request->input('max_budget'));
         }
 
-        return $query->latest()->paginate(15);
+        return $query->latest()->paginate(15)->through(fn (Task $task) => $this->serializeTask($task));
     }
 
     public function mine(Request $request)
@@ -54,7 +55,7 @@ class TaskController extends Controller
             $query->where('client_id', $request->user()->id);
         }
 
-        return response()->json($query->latest()->get());
+        return response()->json($query->latest()->get()->map(fn (Task $task) => $this->serializeTask($task)));
     }
 
     public function store(Request $request)
@@ -68,16 +69,27 @@ class TaskController extends Controller
             'category' => 'required|string',
             'description' => 'required|string',
             'requirements' => 'nullable|string',
+            'image' => 'nullable|file|image|max:5120',
             'budget' => 'required|numeric|min:0',
             'deadline' => 'required|date|after:today',
         ]);
 
+        $imagePath = null;
+        $imageName = null;
+        if ($request->hasFile('image')) {
+            $image = $request->file('image');
+            $imagePath = $image->store('task-images', 'public');
+            $imageName = $image->getClientOriginalName();
+        }
+
         $task = $request->user()->tasksAsClient()->create([
             ...$validated,
+            'image_path' => $imagePath,
+            'image_name' => $imageName,
             'moderation_status' => $request->user()->role === 'admin' ? 'approved' : 'pending',
         ]);
 
-        return response()->json($task->load(['client']), 201);
+        return response()->json($this->serializeTask($task->load(['client'])), 201);
     }
 
     public function show(Request $request, $id)
@@ -109,7 +121,7 @@ class TaskController extends Controller
             return response()->json(['message' => 'Task is no longer publicly available'], 403);
         }
 
-        return response()->json($task);
+        return response()->json($this->serializeTask($task));
     }
 
     public function update(Request $request, $id)
@@ -125,14 +137,25 @@ class TaskController extends Controller
             'category' => 'sometimes|string',
             'description' => 'sometimes|string',
             'requirements' => 'sometimes|nullable|string',
+            'image' => 'nullable|file|image|max:5120',
             'budget' => 'sometimes|numeric|min:0',
             'deadline' => 'sometimes|date',
             'status' => 'sometimes|in:open,in_progress,completed,cancelled',
         ]);
 
+        if ($request->hasFile('image')) {
+            if ($task->image_path) {
+                Storage::disk('public')->delete($task->image_path);
+            }
+
+            $image = $request->file('image');
+            $validated['image_path'] = $image->store('task-images', 'public');
+            $validated['image_name'] = $image->getClientOriginalName();
+        }
+
         $task->update($validated);
 
-        return response()->json($task->load(['client', 'student']));
+        return response()->json($this->serializeTask($task->load(['client', 'student'])));
     }
 
     public function destroy(Request $request, $id)
@@ -141,6 +164,10 @@ class TaskController extends Controller
 
         if ($task->client_id !== $request->user()->id && $request->user()->role !== 'admin') {
             return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        if ($task->image_path) {
+            Storage::disk('public')->delete($task->image_path);
         }
 
         $task->delete();
@@ -220,7 +247,7 @@ class TaskController extends Controller
             ->where('id', '!=', $application->id)
             ->update(['status' => 'rejected']);
 
-        return response()->json($task->load(['client', 'student']));
+        return response()->json($this->serializeTask($task->load(['client', 'student'])));
     }
 
     public function complete(Request $request, $id)
@@ -242,6 +269,16 @@ class TaskController extends Controller
         $task->update(['status' => 'completed']);
         $task->student->increment('completed_tasks');
 
-        return response()->json($task->fresh()->load(['client', 'student']));
+        return response()->json($this->serializeTask($task->fresh()->load(['client', 'student'])));
+    }
+
+    protected function serializeTask(Task $task): array
+    {
+        $data = $task->toArray();
+        $data['image_url'] = $task->image_path
+            ? Storage::disk('public')->url($task->image_path)
+            : null;
+
+        return $data;
     }
 }

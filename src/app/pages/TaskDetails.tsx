@@ -182,6 +182,16 @@ export default function TaskDetails() {
               </div>
             </div>
 
+            {task.image_url && (
+              <div className="overflow-hidden rounded-2xl border border-border bg-card">
+                <img
+                  src={task.image_url}
+                  alt={task.title}
+                  className="h-[360px] w-full object-cover"
+                />
+              </div>
+            )}
+
             <div className="bg-card rounded-2xl p-6 border border-border">
               <h2 className="text-2xl font-bold mb-4">Description</h2>
               <p className="text-foreground/70 leading-relaxed mb-6">
@@ -206,9 +216,17 @@ export default function TaskDetails() {
             <div className="bg-card rounded-2xl p-6 border border-border">
               <h2 className="text-2xl font-bold mb-4">Posted By</h2>
               <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center">
-                  <User className="w-8 h-8 text-primary" />
-                </div>
+                {task.client?.avatar_url ? (
+                  <img
+                    src={task.client.avatar_url}
+                    alt={task.client.name ?? "Client"}
+                    className="w-16 h-16 rounded-full object-cover border border-border"
+                  />
+                ) : (
+                  <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center">
+                    <User className="w-8 h-8 text-primary" />
+                  </div>
+                )}
                 <div className="flex-1">
                   <Link
                     to={`/profile/${task.client_id}`}

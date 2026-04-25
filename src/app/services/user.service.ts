@@ -1,5 +1,5 @@
 import apiClient from '../config/api';
-import { User } from '../types/api';
+import { ResumeManual, User } from '../types/api';
 
 export const userService = {
   async getUserById(id: number): Promise<User> {
@@ -20,6 +20,22 @@ export const userService = {
         'Content-Type': 'multipart/form-data',
       },
     });
+    return response.data;
+  },
+
+  async uploadResume(file: File): Promise<User> {
+    const formData = new FormData();
+    formData.append('resume', file);
+    const response = await apiClient.post<User>('/users/resume', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
+
+  async updateResume(id: number, resume_manual: ResumeManual | null): Promise<User> {
+    const response = await apiClient.put<User>(`/users/${id}`, { resume_manual });
     return response.data;
   },
 };

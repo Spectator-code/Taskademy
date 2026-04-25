@@ -32,8 +32,26 @@ export const taskService = {
     requirements?: string;
     budget: number;
     deadline: string;
+    image?: File | null;
   }): Promise<Task> {
-    const response = await apiClient.post<Task>('/tasks', data);
+    const formData = new FormData();
+    formData.append('title', data.title);
+    formData.append('category', data.category);
+    formData.append('description', data.description);
+    if (data.requirements) {
+      formData.append('requirements', data.requirements);
+    }
+    formData.append('budget', String(data.budget));
+    formData.append('deadline', data.deadline);
+    if (data.image) {
+      formData.append('image', data.image);
+    }
+
+    const response = await apiClient.post<Task>('/tasks', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
     return response.data;
   },
 

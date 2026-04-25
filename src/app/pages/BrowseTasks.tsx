@@ -118,6 +118,15 @@ export default function BrowseTasks() {
               >
                 <div className="flex items-start justify-between gap-6">
                   <div className="flex-1">
+                    {task.image_url && (
+                      <div className="mb-4 overflow-hidden rounded-2xl border border-border">
+                        <img
+                          src={task.image_url}
+                          alt={task.title}
+                          className="h-56 w-full object-cover"
+                        />
+                      </div>
+                    )}
                     <div className="flex items-center gap-3 mb-3 flex-wrap">
                       <span className="px-3 py-1 rounded-full bg-primary/10 text-primary text-sm">
                         {task.category}

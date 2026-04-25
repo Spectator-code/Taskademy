@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router";
 import { motion } from "motion/react";
-import { ArrowLeft, PhilippinePeso, Calendar, Tag } from "lucide-react";
+import { ArrowLeft, PhilippinePeso, Calendar, Tag, Image as ImageIcon } from "lucide-react";
 import { useState } from "react";
 import { taskService } from "../services/task.service";
 import { toast } from "sonner";
@@ -16,6 +16,7 @@ export default function PostTask() {
     deadline: "",
     category: "Design"
   });
+  const [taskImage, setTaskImage] = useState<File | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,6 +30,7 @@ export default function PostTask() {
         requirements: formData.requirements,
         budget: parseFloat(formData.budget),
         deadline: formData.deadline,
+        image: taskImage,
       });
 
       toast.success("Task posted successfully!");
@@ -45,6 +47,15 @@ export default function PostTask() {
       ...formData,
       [e.target.name]: e.target.value
     });
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] ?? null;
+    if (file && !file.type.startsWith("image/")) {
+      toast.error("Please choose an image file.");
+      return;
+    }
+    setTaskImage(file);
   };
 
   return (
@@ -134,6 +145,23 @@ export default function PostTask() {
                 className="w-full px-4 py-3 rounded-xl bg-input border border-border focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all resize-none"
                 required
               />
+            </div>
+            <div className="bg-card rounded-2xl p-6 border border-border">
+              <label htmlFor="image" className="block mb-3">
+                <ImageIcon className="inline w-4 h-4 mr-2" />
+                Task Image
+              </label>
+              <input
+                id="image"
+                name="image"
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+                className="w-full px-4 py-3 rounded-xl bg-input border border-border focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+              />
+              {taskImage && (
+                <p className="text-sm text-foreground/60 mt-3">{taskImage.name}</p>
+              )}
             </div>
             <div className="grid md:grid-cols-2 gap-6">
               <div className="bg-card rounded-2xl p-6 border border-border">

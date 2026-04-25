@@ -5,6 +5,8 @@ namespace Tests\Feature;
 use App\Models\Task;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\Sanctum;
 use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use Tests\TestCase;
@@ -14,6 +16,7 @@ class TaskApiTest extends TestCase
 
     public function test_client_can_create_task(): void
     {
+        Storage::fake('public');
         $client = User::factory()->create(['role' => 'client']);
         Sanctum::actingAs($client);
 
@@ -22,18 +25,23 @@ class TaskApiTest extends TestCase
             'category' => 'Development',
             'description' => 'Create a responsive marketing site.',
             'requirements' => "React\nTailwind CSS",
+            'image' => UploadedFile::fake()->create('task-cover.png', 120, 'image/png'),
             'budget' => 300,
             'deadline' => now()->addDays(5)->toDateString(),
         ]);
 
         $response
             ->assertCreated()
-            ->assertJsonPath('client_id', $client->id);
+            ->assertJsonPath('client_id', $client->id)
+            ->assertJsonPath('image_name', 'task-cover.png');
 
         $this->assertDatabaseHas('tasks', [
             'title' => 'Build a landing page',
             'client_id' => $client->id,
         ]);
+
+        $task = Task::where('client_id', $client->id)->firstOrFail();
+        Storage::disk('public')->assertExists($task->image_path);
     }
 
     public function test_student_can_create_task_pending_moderation(): void

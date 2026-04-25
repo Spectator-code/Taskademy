@@ -3,7 +3,7 @@ import { motion } from "motion/react";
 import { ArrowLeft, Star, Mail, MapPin, Calendar, ExternalLink, Upload, FileText, Plus, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { userService } from "../services/user.service";
-import { User as UserType } from "../types/api";
+import { ResumeManual, User as UserType } from "../types/api";
 import { useAuth } from "../contexts/AuthContext";
 import { toast } from "sonner";
 
@@ -58,11 +58,12 @@ const reviews = [
   }
 ];
 
-const completedTasks = [
-  { id: 1, title: "Design Landing Page for Startup", completed: "1 week ago" },
-  { id: 2, title: "Build React Component Library", completed: "2 weeks ago" },
-  { id: 3, title: "Social Media Graphics Package", completed: "3 weeks ago" }
-];
+const emptyResume = (): ResumeManual => ({
+  summary: "",
+  experience: [{ company: "", position: "", duration: "", description: "" }],
+  education: [{ school: "", degree: "", year: "" }],
+  skills: [""],
+});
 
 export default function Profile() {
   const params = useParams();
@@ -72,6 +73,7 @@ export default function Profile() {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [savingProfile, setSavingProfile] = useState(false);
+  const [savingResume, setSavingResume] = useState(false);
   const [editName, setEditName] = useState("");
   const [editBio, setEditBio] = useState("");
   const [editSkills, setEditSkills] = useState("");
@@ -79,17 +81,14 @@ export default function Profile() {
   const [activeTab, setActiveTab] = useState<'portfolio' | 'reviews' | 'tasks' | 'resume'>('portfolio');
   const [resumeMode, setResumeMode] = useState<'upload' | 'manual' | null>(null);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
-  const [manualResume, setManualResume] = useState({
-    summary: "",
-    experience: [{ company: "", position: "", duration: "", description: "" }],
-    education: [{ school: "", degree: "", year: "" }],
-    skills: [""]
-  });
+  const [manualResume, setManualResume] = useState<ResumeManual>(emptyResume);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file && (file.type === 'application/pdf' || file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document')) {
       setUploadedFile(file);
+    } else if (file) {
+      toast.error("Please upload a PDF or DOCX file.");
     }
   };
 
@@ -145,6 +144,9 @@ export default function Profile() {
         setEditName(loadedUser.name ?? "");
         setEditBio(loadedUser.bio ?? "");
         setEditSkills(Array.isArray(loadedUser.skills) ? loadedUser.skills.join(", ") : "");
+        setManualResume(loadedUser.resume_manual ?? emptyResume());
+        setUploadedFile(null);
+        setResumeMode(null);
       })
       .catch((error: any) => {
         toast.error(error.response?.data?.message || "Failed to load profile.");
@@ -153,6 +155,19 @@ export default function Profile() {
   }, [userId]);
 
   const canEditProfile = profileUser && (user?.id === profileUser.id || user?.role === "admin");
+  const isResumeOwner = profileUser?.id === user?.id;
+  const hasUploadedResume = Boolean(profileUser?.resume_file_name && profileUser?.resume_url);
+  const hasManualResume = Boolean(
+    profileUser?.resume_manual?.summary?.trim() ||
+    profileUser?.resume_manual?.experience?.some((item) =>
+      [item.company, item.position, item.duration, item.description].some((value) => value?.trim())
+    ) ||
+    profileUser?.resume_manual?.education?.some((item) =>
+      [item.school, item.degree, item.year].some((value) => value?.trim())
+    ) ||
+    profileUser?.resume_manual?.skills?.some((value) => value?.trim())
+  );
+  const hasAnyResume = hasUploadedResume || hasManualResume;
 
   const handleCancelEdit = () => {
     setEditName(profileUser?.name ?? "");
@@ -200,6 +215,86 @@ export default function Profile() {
     return parts.map((p) => p[0]?.toUpperCase()).join("") || "U";
   }, [profileUser?.name]);
 
+  const updateExperience = (index: number, field: keyof ResumeManual["experience"][number], value: string) => {
+    setManualResume((prev) => ({
+      ...prev,
+      experience: prev.experience.map((item, i) => (i === index ? { ...item, [field]: value } : item)),
+    }));
+  };
+
+  const updateEducation = (index: number, field: keyof ResumeManual["education"][number], value: string) => {
+    setManualResume((prev) => ({
+      ...prev,
+      education: prev.education.map((item, i) => (i === index ? { ...item, [field]: value } : item)),
+    }));
+  };
+
+  const updateResumeSkill = (index: number, value: string) => {
+    setManualResume((prev) => ({
+      ...prev,
+      skills: prev.skills.map((item, i) => (i === index ? value : item)),
+    }));
+  };
+
+  const handleSaveUploadedResume = async () => {
+    if (!uploadedFile || !profileUser || !isResumeOwner) return;
+
+    setSavingResume(true);
+    try {
+      const updatedUser = await userService.uploadResume(uploadedFile);
+      setProfileUser(updatedUser);
+      setUploadedFile(null);
+      setResumeMode(null);
+      toast.success("Resume uploaded");
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to upload resume.");
+    } finally {
+      setSavingResume(false);
+    }
+  };
+
+  const handleSaveManualResume = async () => {
+    if (!profileUser || !isResumeOwner) return;
+
+    const cleanedResume: ResumeManual = {
+      summary: manualResume.summary.trim(),
+      experience: manualResume.experience
+        .map((item) => ({
+          company: item.company.trim(),
+          position: item.position.trim(),
+          duration: item.duration.trim(),
+          description: item.description.trim(),
+        }))
+        .filter((item) => item.company || item.position || item.duration || item.description),
+      education: manualResume.education
+        .map((item) => ({
+          school: item.school.trim(),
+          degree: item.degree.trim(),
+          year: item.year.trim(),
+        }))
+        .filter((item) => item.school || item.degree || item.year),
+      skills: manualResume.skills.map((item) => item.trim()).filter(Boolean),
+    };
+
+    setSavingResume(true);
+    try {
+      const updatedUser = await userService.updateResume(profileUser.id, cleanedResume);
+      setProfileUser(updatedUser);
+      setManualResume(updatedUser.resume_manual ?? emptyResume());
+      setResumeMode(null);
+      toast.success("Resume saved");
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to save resume.");
+    } finally {
+      setSavingResume(false);
+    }
+  };
+
+  const handleEditManualResume = () => {
+    setManualResume(profileUser?.resume_manual ?? emptyResume());
+    setResumeMode("manual");
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto px-6 py-8">
@@ -214,12 +309,20 @@ export default function Profile() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="bg-card rounded-2xl p-8 border border-border mb-8"
+            className="bg-card rounded-2xl p-8 border border-border mb-8"
         >
           <div className="flex items-start gap-6">
-            <div className="w-24 h-24 rounded-full bg-primary/20 flex items-center justify-center text-4xl font-bold text-primary">
-              {initials}
-            </div>
+            {profileUser?.avatar_url ? (
+              <img
+                src={profileUser.avatar_url}
+                alt={profileUser.name ?? "User"}
+                className="w-24 h-24 rounded-full object-cover border border-border"
+              />
+            ) : (
+              <div className="w-24 h-24 rounded-full bg-primary/20 flex items-center justify-center text-4xl font-bold text-primary">
+                {initials}
+              </div>
+            )}
             <div className="flex-1">
               <div className="flex items-start justify-between gap-4 mb-4">
                 <div>
@@ -447,17 +550,28 @@ export default function Profile() {
           >
             <h2 className="text-2xl font-bold mb-6">Completed Tasks</h2>
             <div className="space-y-4">
-              {completedTasks.map((task) => (
-                <div key={task.id} className="bg-card rounded-2xl p-6 border border-border flex items-center justify-between">
-                  <div>
-                    <h3 className="font-bold mb-1">{task.title}</h3>
-                    <p className="text-sm text-foreground/60">Completed {task.completed}</p>
-                  </div>
-                  <span className="px-4 py-2 rounded-full bg-primary/10 text-primary text-sm">
-                    Completed
-                  </span>
+              {(profileUser?.tasksAsStudent ?? []).length === 0 ? (
+                <div className="bg-card rounded-2xl p-6 border border-border text-foreground/60">
+                  No completed tasks yet.
                 </div>
-              ))}
+              ) : (
+                (profileUser?.tasksAsStudent ?? []).map((task) => (
+                  <div key={task.id} className="bg-card rounded-2xl p-6 border border-border flex items-center justify-between gap-4">
+                    <div className="min-w-0">
+                      <Link to={`/task/${task.id}`} className="font-bold mb-1 hover:text-primary transition-colors block">
+                        {task.title}
+                      </Link>
+                      <p className="text-sm text-foreground/60">
+                        Completed {task.updated_at ? new Date(task.updated_at).toLocaleDateString() : ""}
+                        {task.client?.name ? ` • Posted by ${task.client.name}` : ""}
+                      </p>
+                    </div>
+                    <span className="px-4 py-2 rounded-full bg-primary/10 text-primary text-sm whitespace-nowrap">
+                      Completed
+                    </span>
+                  </div>
+                ))
+              )}
             </div>
           </motion.div>
         )}
@@ -469,7 +583,7 @@ export default function Profile() {
           >
             <h2 className="text-2xl font-bold mb-6">Resume</h2>
 
-            {!resumeMode && !uploadedFile && (
+            {!resumeMode && !uploadedFile && isResumeOwner && (
               <div className="grid md:grid-cols-2 gap-6">
                 <button
                   onClick={() => setResumeMode('upload')}
@@ -491,7 +605,96 @@ export default function Profile() {
               </div>
             )}
 
-            {resumeMode === 'upload' && !uploadedFile && (
+            {!isResumeOwner && hasAnyResume && (
+              <div className="space-y-6">
+                {hasUploadedResume && (
+                  <div className="bg-card rounded-2xl p-8 border border-border">
+                    <div className="flex items-center justify-between gap-4 flex-wrap">
+                      <div className="flex items-center gap-4">
+                        <FileText className="w-12 h-12 text-primary" />
+                        <div>
+                          <h3 className="text-xl font-bold">{profileUser?.resume_file_name}</h3>
+                          <p className="text-sm text-foreground/60">Uploaded resume</p>
+                        </div>
+                      </div>
+                      <a
+                        href={profileUser?.resume_url ?? "#"}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="px-6 py-3 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all"
+                      >
+                        View File
+                      </a>
+                    </div>
+                  </div>
+                )}
+
+                {hasManualResume && (
+                  <div className="bg-card rounded-2xl p-8 border border-border space-y-8">
+                    {profileUser?.resume_manual?.summary && (
+                      <div>
+                        <h3 className="text-xl font-bold mb-3">Professional Summary</h3>
+                        <p className="text-foreground/70 leading-relaxed">{profileUser.resume_manual.summary}</p>
+                      </div>
+                    )}
+
+                    {(profileUser?.resume_manual?.experience?.length ?? 0) > 0 && (
+                      <div>
+                        <h3 className="text-xl font-bold mb-4">Work Experience</h3>
+                        <div className="space-y-4">
+                          {profileUser?.resume_manual?.experience.map((item, index) => (
+                            <div key={`${item.company}-${index}`} className="rounded-xl border border-border p-4">
+                              <div className="font-semibold">{item.position || item.company}</div>
+                              <div className="text-sm text-foreground/60">
+                                {[item.company, item.duration].filter(Boolean).join(" | ")}
+                              </div>
+                              {item.description && <p className="text-foreground/70 mt-2">{item.description}</p>}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {(profileUser?.resume_manual?.education?.length ?? 0) > 0 && (
+                      <div>
+                        <h3 className="text-xl font-bold mb-4">Education</h3>
+                        <div className="space-y-4">
+                          {profileUser?.resume_manual?.education.map((item, index) => (
+                            <div key={`${item.school}-${index}`} className="rounded-xl border border-border p-4">
+                              <div className="font-semibold">{item.degree || item.school}</div>
+                              <div className="text-sm text-foreground/60">
+                                {[item.school, item.year].filter(Boolean).join(" | ")}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {(profileUser?.resume_manual?.skills?.length ?? 0) > 0 && (
+                      <div>
+                        <h3 className="text-xl font-bold mb-4">Skills</h3>
+                        <div className="flex flex-wrap gap-3">
+                          {profileUser?.resume_manual?.skills.map((skill) => (
+                            <span key={skill} className="px-4 py-2 rounded-full bg-primary/10 text-primary">
+                              {skill}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {!isResumeOwner && !hasAnyResume && (
+              <div className="bg-card rounded-2xl p-8 border border-border text-foreground/60">
+                No resume has been added yet.
+              </div>
+            )}
+
+            {resumeMode === 'upload' && !uploadedFile && isResumeOwner && (
               <div className="bg-card rounded-2xl p-8 border border-border">
                 <label className="flex flex-col items-center justify-center border-2 border-dashed border-border rounded-2xl p-12 hover:border-primary transition-all cursor-pointer">
                   <Upload className="w-16 h-16 text-primary mb-4" />
@@ -516,7 +719,7 @@ export default function Profile() {
               </div>
             )}
 
-            {uploadedFile && (
+            {uploadedFile && isResumeOwner && (
               <div className="bg-card rounded-2xl p-8 border border-border">
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-4">
@@ -538,13 +741,17 @@ export default function Profile() {
                     Remove
                   </button>
                 </div>
-                <button className="px-6 py-3 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all">
+                <button
+                  onClick={handleSaveUploadedResume}
+                  disabled={savingResume}
+                  className="px-6 py-3 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all disabled:opacity-50"
+                >
                   Save Resume
                 </button>
               </div>
             )}
 
-            {resumeMode === 'manual' && (
+            {resumeMode === 'manual' && isResumeOwner && (
               <div className="bg-card rounded-2xl p-8 border border-border">
                 <div className="space-y-8">
                   <div>
@@ -584,21 +791,29 @@ export default function Profile() {
                           <div className="grid md:grid-cols-2 gap-4 mb-4">
                             <input
                               type="text"
+                              value={exp.company}
+                              onChange={(e) => updateExperience(index, "company", e.target.value)}
                               placeholder="Company Name"
                               className="px-4 py-3 rounded-xl bg-input border border-border focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
                             />
                             <input
                               type="text"
+                              value={exp.position}
+                              onChange={(e) => updateExperience(index, "position", e.target.value)}
                               placeholder="Position"
                               className="px-4 py-3 rounded-xl bg-input border border-border focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
                             />
                           </div>
                           <input
                             type="text"
+                            value={exp.duration}
+                            onChange={(e) => updateExperience(index, "duration", e.target.value)}
                             placeholder="Duration (e.g., Jan 2023 - Present)"
                             className="w-full px-4 py-3 rounded-xl bg-input border border-border focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all mb-4"
                           />
                           <textarea
+                            value={exp.description}
+                            onChange={(e) => updateExperience(index, "description", e.target.value)}
                             placeholder="Job description and achievements..."
                             className="w-full px-4 py-3 rounded-xl bg-input border border-border focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all resize-none"
                             rows={3}
@@ -634,16 +849,22 @@ export default function Profile() {
                           <div className="grid md:grid-cols-3 gap-4">
                             <input
                               type="text"
+                              value={edu.school}
+                              onChange={(e) => updateEducation(index, "school", e.target.value)}
                               placeholder="School/University"
                               className="px-4 py-3 rounded-xl bg-input border border-border focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
                             />
                             <input
                               type="text"
+                              value={edu.degree}
+                              onChange={(e) => updateEducation(index, "degree", e.target.value)}
                               placeholder="Degree"
                               className="px-4 py-3 rounded-xl bg-input border border-border focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
                             />
                             <input
                               type="text"
+                              value={edu.year}
+                              onChange={(e) => updateEducation(index, "year", e.target.value)}
                               placeholder="Year"
                               className="px-4 py-3 rounded-xl bg-input border border-border focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
                             />
@@ -668,6 +889,8 @@ export default function Profile() {
                         <div key={index} className="flex gap-2">
                           <input
                             type="text"
+                            value={skill}
+                            onChange={(e) => updateResumeSkill(index, e.target.value)}
                             placeholder="e.g., React, Python, UI Design"
                             className="flex-1 px-4 py-3 rounded-xl bg-input border border-border focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
                           />
@@ -684,7 +907,11 @@ export default function Profile() {
                     </div>
                   </div>
                   <div className="flex gap-4 pt-4">
-                    <button className="px-6 py-3 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all">
+                    <button
+                      onClick={handleSaveManualResume}
+                      disabled={savingResume}
+                      className="px-6 py-3 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all disabled:opacity-50"
+                    >
                       Save Resume
                     </button>
                     <button
@@ -695,6 +922,52 @@ export default function Profile() {
                     </button>
                   </div>
                 </div>
+              </div>
+            )}
+
+            {!resumeMode && !uploadedFile && isResumeOwner && hasAnyResume && (
+              <div className="space-y-6 mt-6">
+                {hasUploadedResume && (
+                  <div className="bg-card rounded-2xl p-8 border border-border">
+                    <div className="flex items-center justify-between gap-4 flex-wrap">
+                      <div className="flex items-center gap-4">
+                        <FileText className="w-12 h-12 text-primary" />
+                        <div>
+                          <h3 className="text-xl font-bold">{profileUser?.resume_file_name}</h3>
+                          <p className="text-sm text-foreground/60">Uploaded resume</p>
+                        </div>
+                      </div>
+                      <a
+                        href={profileUser?.resume_url ?? "#"}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="px-6 py-3 rounded-xl bg-background hover:bg-muted transition-all"
+                      >
+                        View File
+                      </a>
+                    </div>
+                  </div>
+                )}
+
+                {hasManualResume && (
+                  <div className="bg-card rounded-2xl p-8 border border-border space-y-6">
+                    <div className="flex items-center justify-between gap-4 flex-wrap">
+                      <div>
+                        <h3 className="text-xl font-bold">Manual Resume</h3>
+                        <p className="text-sm text-foreground/60">Editable only from your own profile.</p>
+                      </div>
+                      <button
+                        onClick={handleEditManualResume}
+                        className="px-6 py-3 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all"
+                      >
+                        Edit Resume
+                      </button>
+                    </div>
+                    {profileUser?.resume_manual?.summary && (
+                      <p className="text-foreground/70 leading-relaxed">{profileUser.resume_manual.summary}</p>
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </motion.div>

@@ -28,6 +28,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/users/{id}', [UserController::class, 'show']);
     Route::put('/users/{id}', [UserController::class, 'update']);
     Route::post('/users/avatar', [UserController::class, 'uploadAvatar']);
+    Route::post('/users/resume', [UserController::class, 'uploadResume']);
     Route::middleware('admin')->group(function () {
         Route::get('/admin/stats', [AdminController::class, 'stats']);
         Route::get('/admin/registrations', [AdminController::class, 'registrations']);
