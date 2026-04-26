@@ -46,7 +46,7 @@ export default function Landing() {
             transition={{ duration: 0.6 }}
           >
             <Link to={homeTarget} onClick={handleHomeClick} className="text-2xl font-bold flex items-center gap-4">
-              <img src={logoSrc} alt="Taskademy" className="h-12 w-auto object-contain" />
+              <img src={logoSrc} alt="Taskademy" className="h-35 w-auto object-contain" />
             </Link>
           </motion.div>
 
@@ -115,7 +115,7 @@ export default function Landing() {
             <h1 className="text-6xl md:text-7xl font-bold mb-6 leading-tight">
               {t("learnWorkEarn") || "Learn. Work. Earn."}
             </h1>
-            <div className="text-xl text-foreground/70 mb-8 leading-relaxed h-8">
+            <div className="text-xl text-foreground/70 mb-15 leading-relaxed h-8">
               <TypewriterText text={t("studentFriendlyFreelance") || "A student-friendly freelance platform for real-world experience"} delay={50} />
             </div>
             <Link
@@ -312,7 +312,7 @@ export default function Landing() {
             <div className="lg:col-span-2">
               <div className="mb-6">
                 <Link to={homeTarget} onClick={handleHomeClick}>
-                  <img src={logoSrc} alt="Taskademy" className="h-20 w-auto object-contain hover:opacity-80 transition-opacity" />
+                  <img src={logoSrc} alt="Taskademy" className="h-35 w-auto object-contain hover:opacity-80 transition-opacity" />
                 </Link>
               </div>
               <p className="text-foreground/60 text-lg leading-relaxed max-w-sm mb-8">

@@ -111,8 +111,8 @@ export default function DashboardSidebar() {
       >
         {!isSidebarCollapsed && (
           <Link to="/dashboard" className="text-xl font-bold flex items-center gap-3 min-w-0">
-            <img src={logoSrc} alt="Taskademy" className="h-11 w-11 object-contain flex-shrink-0" />
-            <span className="whitespace-nowrap">Taskademy</span>
+            <img src={logoSrc} alt="Taskademy" className="h-20 w-50 object-contain flex-shrink-0" />
+            
           </Link>
         )}
         {isSidebarCollapsed && (

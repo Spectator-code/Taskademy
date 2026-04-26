@@ -368,7 +368,7 @@ export default function Dashboard() {
               )}
 
               {!loading && recommendedTasks.length === 0 && (
-                <div className="bg-card rounded-2xl p-6 border border-border text-foreground/60">
+                <div className="bg-card rounded-2xl p-6 border border-border text-foreground/60 mb-6">
                   No open tasks available yet.
                 </div>
               )}

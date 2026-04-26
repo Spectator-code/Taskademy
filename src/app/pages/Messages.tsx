@@ -222,7 +222,7 @@ export default function Messages() {
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder={t("searchConversations") || "Search conversations..."}
+                placeholder={t("Search Conversations") || "Search conversations..."}
                 className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-card border border-border focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
               />
             </div>
