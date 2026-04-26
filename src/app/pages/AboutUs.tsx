@@ -1,8 +1,11 @@
 import { motion } from "motion/react";
 import { Link } from "react-router";
 import { ArrowLeft, Rocket, Shield, Users, Heart } from "lucide-react";
+import { useApp } from "../contexts/AppContext";
 
 export default function AboutUs() {
+  const { theme } = useApp();
+  const logoSrc = theme === "modern" ? "/logo.png" : "/logos.png";
   const values = [
     {
       icon: Rocket,
@@ -88,7 +91,7 @@ export default function AboutUs() {
               viewport={{ once: true }}
               className="relative aspect-square rounded-[3rem] overflow-hidden border border-border bg-muted/50 flex items-center justify-center"
             >
-               <img src="/logo.png" alt="Taskademy Brand" className="w-48 h-auto opacity-50 grayscale hover:grayscale-0 transition-all duration-700" />
+               <img src={logoSrc} alt="Taskademy Brand" className="w-48 h-auto opacity-50 grayscale hover:grayscale-0 transition-all duration-700" />
                <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
                <div className="absolute bottom-12 left-12 right-12">
                   <p className="text-2xl font-bold">Founded in 2026</p>

@@ -1,13 +1,22 @@
 import { Link, useLocation, useNavigate } from "react-router";
 import { motion } from "motion/react";
-import { Brain, Briefcase, Star, ArrowRight, User, Search } from "lucide-react";
+import { Brain, Briefcase, Star, ArrowRight, User, Search, Twitter, Github, Instagram, Linkedin, Mail, Send } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
+import { useApp } from "../contexts/AppContext";
 import ThemeSwitcher from "../components/ui/ThemeSwitcher";
+import "../../styles/SparkleButton.css";
+import Testimonials from "../components/Testimonials";
+import AdvertisementCarousel from "../components/AdvertisementCarousel";
+import TypewriterText from "../components/ui/TypewriterText";
+import { useTranslation } from "../hooks/useTranslation";
 import { useEffect } from "react";
 
 export default function Landing() {
   const { isAuthenticated } = useAuth();
+  const { t } = useTranslation();
+  const { theme } = useApp();
   const homeTarget = isAuthenticated ? "/dashboard" : "/";
+  const logoSrc = theme === "modern" ? "/logo.png" : "/logos.png";
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -27,28 +36,6 @@ export default function Landing() {
     }
   };
 
-  useEffect(() => {
-    const handleCopy = (e: ClipboardEvent) => {
-      e.preventDefault();
-    };
-    const handlePaste = (e: ClipboardEvent) => {
-      e.preventDefault();
-    };
-    const handleContextMenu = (e: MouseEvent) => {
-      e.preventDefault();
-    };
-
-    document.addEventListener("copy", handleCopy);
-    document.addEventListener("paste", handlePaste);
-    document.addEventListener("contextmenu", handleContextMenu);
-
-    return () => {
-      document.removeEventListener("copy", handleCopy);
-      document.removeEventListener("paste", handlePaste);
-      document.removeEventListener("contextmenu", handleContextMenu);
-    };
-  }, []);
-
   return (
     <div className="min-h-screen bg-background">
       <header className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 backdrop-blur-lg">
@@ -59,7 +46,7 @@ export default function Landing() {
             transition={{ duration: 0.6 }}
           >
             <Link to={homeTarget} onClick={handleHomeClick} className="text-2xl font-bold flex items-center gap-4">
-              <img src="/logo.png" alt="Taskademy" className="h-70 w-70 object-contain" />
+              <img src={logoSrc} alt="Taskademy" className="h-12 w-auto object-contain" />
             </Link>
           </motion.div>
 
@@ -70,13 +57,13 @@ export default function Landing() {
             className="hidden md:flex items-center gap-8"
           >
             <Link to={homeTarget} onClick={handleHomeClick} className="text-foreground/80 hover:text-foreground transition-colors">
-              Home
+              {t("home") || "Home"}
             </Link>
             <Link to="/browse" className="text-foreground/80 hover:text-foreground transition-colors">
-              Browse Tasks
+              {t("browseTasks") || "Browse Tasks"}
             </Link>
             <a href="#how-it-works" className="text-foreground/80 hover:text-foreground transition-colors">
-              How it Works
+              {t("howItWorks") || "How it Works"}
             </a>
           </motion.nav>
 
@@ -100,13 +87,13 @@ export default function Landing() {
                   to="/login"
                   className="px-5 py-2.5 rounded-xl text-foreground/80 hover:text-foreground transition-colors"
                 >
-                  Login
+                  {t("login") || "Login"}
                 </Link>
                 <Link
                   to="/register"
                   className="px-5 py-2.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all"
                 >
-                  Register
+                  {t("register") || "Register"}
                 </Link>
               </>
             )}
@@ -126,17 +113,48 @@ export default function Landing() {
             transition={{ duration: 0.8, delay: 0.3 }}
           >
             <h1 className="text-6xl md:text-7xl font-bold mb-6 leading-tight">
-              Learn. Work. Earn.
+              {t("learnWorkEarn") || "Learn. Work. Earn."}
             </h1>
-            <p className="text-xl text-foreground/70 mb-8 leading-relaxed">
-              A student-friendly freelance platform for real-world experience
-            </p>
+            <div className="text-xl text-foreground/70 mb-8 leading-relaxed h-8">
+              <TypewriterText text={t("studentFriendlyFreelance") || "A student-friendly freelance platform for real-world experience"} delay={50} />
+            </div>
             <Link
               to="/register"
-              className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all group"
+              className="sparkle-button"
             >
-              Get Started
-              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              <div className="dots_border"></div>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                className="sparkle"
+              >
+                <path
+                  className="path"
+                  strokeLinejoin="round"
+                  strokeLinecap="round"
+                  stroke="black"
+                  fill="black"
+                  d="M14.187 8.096L15 5.25L15.813 8.096C16.0231 8.83114 16.4171 9.50062 16.9577 10.0413C17.4984 10.5819 18.1679 10.9759 18.903 11.186L21.75 12L18.904 12.813C18.1689 13.0231 17.4994 13.4171 16.9587 13.9577C16.4181 14.4984 16.0241 15.1679 15.814 15.903L15 18.75L14.187 15.904C13.9769 15.1689 13.5829 14.4994 13.0423 13.9587C12.5016 13.4181 11.8321 13.0241 11.097 12.814L8.25 12L11.096 11.187C11.8311 10.9769 12.5006 10.5829 13.0413 10.0423C13.5819 9.50162 13.9759 8.83214 14.186 8.097L14.187 8.096Z"
+                ></path>
+                <path
+                  className="path"
+                  strokeLinejoin="round"
+                  strokeLinecap="round"
+                  stroke="black"
+                  fill="black"
+                  d="M6 14.25L5.741 15.285C5.59267 15.8785 5.28579 16.4206 4.85319 16.8532C4.42059 17.2858 3.87853 17.5927 3.285 17.741L2.25 18L3.285 18.259C3.87853 18.4073 4.42059 18.7142 4.85319 19.1468C5.28579 19.5794 5.59267 20.1215 5.741 20.715L6 21.75L6.259 20.715C6.40725 20.1216 6.71398 19.5796 7.14639 19.147C7.5788 18.7144 8.12065 18.4075 8.714 18.259L9.75 18L8.714 17.741C8.12065 17.5925 7.5788 17.2856 7.14639 16.853C6.71398 16.4204 6.40725 15.8784 6.259 15.285L6 14.25Z"
+                ></path>
+                <path
+                  className="path"
+                  strokeLinejoin="round"
+                  strokeLinecap="round"
+                  stroke="black"
+                  fill="black"
+                  d="M6.5 4L6.303 4.5915C6.24777 4.75718 6.15472 4.90774 6.03123 5.03123C5.90774 5.15472 5.75718 5.24777 5.5915 5.303L5 5.5L5.5915 5.697C5.75718 5.75223 5.90774 5.84528 6.03123 5.96877C6.15472 6.09226 6.24777 6.24282 6.303 6.4085L6.5 7L6.697 6.4085C6.75223 6.24282 6.84528 6.09226 6.96877 5.96877C7.09226 5.84528 7.24282 5.75223 7.4085 5.697L8 5.5L7.4085 5.303C7.24282 5.24777 7.09226 5.15472 6.96877 5.03123C6.84528 4.90774 6.75223 4.75718 6.697 4.5915L6.5 4Z"
+                ></path>
+              </svg>
+              <span className="text_button">{t("getStarted") || "Get Started"}</span>
             </Link>
           </motion.div>
 
@@ -146,28 +164,13 @@ export default function Landing() {
             transition={{ duration: 0.8, delay: 0.5 }}
             className="relative"
           >
-            <div className="relative bg-card/50 backdrop-blur-sm rounded-3xl p-8 border border-border">
-              <div className="space-y-4">
-                <div className="h-3 bg-primary/20 rounded-full w-3/4" />
-                <div className="h-3 bg-primary/10 rounded-full w-full" />
-                <div className="h-3 bg-primary/10 rounded-full w-5/6" />
-                <div className="grid grid-cols-2 gap-4 mt-8">
-                  <div className="bg-background/80 rounded-2xl p-4 border border-border">
-                    <div className="h-16 w-16 bg-primary/20 rounded-xl mb-3" />
-                    <div className="h-2 bg-primary/10 rounded w-full mb-2" />
-                    <div className="h-2 bg-primary/10 rounded w-2/3" />
-                  </div>
-                  <div className="bg-background/80 rounded-2xl p-4 border border-border">
-                    <div className="h-16 w-16 bg-primary/20 rounded-xl mb-3" />
-                    <div className="h-2 bg-primary/10 rounded w-full mb-2" />
-                    <div className="h-2 bg-primary/10 rounded w-2/3" />
-                  </div>
-                </div>
-              </div>
-            </div>
+            <Testimonials isHero={true} />
           </motion.div>
         </div>
       </section>
+
+      <AdvertisementCarousel />
+
       <section className="relative py-32 bg-secondary/30">
         <div className="max-w-7xl mx-auto px-6">
           <motion.div
@@ -178,29 +181,29 @@ export default function Landing() {
             className="text-center mb-16"
           >
             <h2 className="text-4xl md:text-5xl font-bold mb-4">
-              Why Taskademy?
+              {t("whyTaskademy") || "Why Taskademy?"}
             </h2>
-            <p className="text-foreground/70 text-lg">
-              Build your career while you learn
-            </p>
+            <div className="text-foreground/70 text-lg h-8">
+              <TypewriterText text={t("buildCareer") || "Build your career while you learn"} />
+            </div>
           </motion.div>
 
           <div className="grid md:grid-cols-3 gap-8">
             {[
               {
                 icon: Brain,
-                title: "Skill Building",
-                description: "Learn by doing real projects that matter"
+                title: t("skillBuilding") || "Skill Building",
+                description: t("skillBuildingDesc") || "Learn by doing real projects that matter"
               },
               {
                 icon: Briefcase,
-                title: "Real Tasks",
-                description: "Work on genuine projects with real clients"
+                title: t("realTasks") || "Real Tasks",
+                description: t("realTasksDesc") || "Work on genuine projects with real clients"
               },
               {
                 icon: Star,
-                title: "Portfolio Growth",
-                description: "Build a portfolio that showcases your work"
+                title: t("portfolioGrowth") || "Portfolio Growth",
+                description: t("portfolioGrowthDesc") || "Build a portfolio that showcases your work"
               }
             ].map((feature, index) => (
               <motion.div
@@ -215,9 +218,9 @@ export default function Landing() {
                   <feature.icon className="w-8 h-8 text-primary" />
                 </div>
                 <h3 className="text-2xl font-bold mb-4">{feature.title}</h3>
-                <p className="text-foreground/70 leading-relaxed">
-                  {feature.description}
-                </p>
+                <div className="text-foreground/70 leading-relaxed min-h-[3rem]">
+                  <TypewriterText text={feature.description} delay={30} />
+                </div>
               </motion.div>
             ))}
           </div>
@@ -235,11 +238,11 @@ export default function Landing() {
             className="text-center mb-24"
           >
             <h2 className="text-4xl md:text-6xl font-bold mb-4 tracking-tight">
-              Your Journey at Taskademy
+              {t("yourJourney") || "Your Journey at Taskademy"}
             </h2>
-            <p className="text-foreground/60 text-lg max-w-2xl mx-auto">
-              From student to professional in three simple steps.
-            </p>
+            <div className="text-foreground/60 text-lg max-w-2xl mx-auto h-8">
+              <TypewriterText text={t("journeyDesc") || "From student to professional in three simple steps."} />
+            </div>
           </motion.div>
 
           <div className="grid md:grid-cols-3 gap-12 relative">
@@ -248,22 +251,22 @@ export default function Landing() {
             {[
               { 
                 step: "01", 
-                title: "Create Profile", 
-                description: "Showcase your skills, university, and passion. Build a profile that grabs attention.",
+                title: t("createProfile") || "Create Profile", 
+                description: t("createProfileDesc") || "Showcase your skills, university, and passion. Build a profile that grabs attention.",
                 icon: User,
                 color: "from-blue-500/20 to-cyan-500/20"
               },
               { 
                 step: "02", 
-                title: "Pick Your Task", 
-                description: "Filter through real-world projects. From web dev to design, find your perfect match.",
+                title: t("pickYourTask") || "Pick Your Task", 
+                description: t("pickYourTaskDesc") || "Filter through real-world projects. From web dev to design, find your perfect match.",
                 icon: Search,
                 color: "from-purple-500/20 to-pink-500/20"
               },
               { 
                 step: "03", 
-                title: "Launch Career", 
-                description: "Deliver high-quality work, get paid, and earn verified ratings for your resume.",
+                title: t("launchCareer") || "Launch Career", 
+                description: t("launchCareerDesc") || "Deliver high-quality work, get paid, and earn verified ratings for your resume.",
                 icon: Star,
                 color: "from-emerald-500/20 to-teal-500/20"
               }
@@ -287,69 +290,73 @@ export default function Landing() {
                   </div>
                   
                   <h3 className="text-2xl font-bold mb-4">{item.title}</h3>
-                  <p className="text-foreground/70 leading-relaxed">
-                    {item.description}
-                  </p>
+                  <div className="text-foreground/70 leading-relaxed min-h-[4rem]">
+                    <TypewriterText text={item.description} delay={25} />
+                  </div>
                 </div>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
-      <footer className="relative border-t border-border bg-card/30 pt-24 pb-12 overflow-hidden">
+      
+      {/* Testimonials moved to hero section */}
+      
+      <footer className="relative border-t border-border bg-background pt-24 pb-12 overflow-hidden">
+        {/* Animated Background Glow */}
+        <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-primary/10 rounded-full blur-[100px] pointer-events-none" />
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
         
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="grid grid-cols-2 md:grid-cols-6 gap-12 mb-20">
-            <div className="col-span-2">
-              <div className="text-3xl font-bold mb-6 flex items-center gap-4">
-                <img src="/logo.png" alt="Taskademy" className="h-30 w-auto object-contain" />
-                
+        <div className="max-w-7xl mx-auto px-6 relative z-10">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-12 mb-20">
+            <div className="lg:col-span-2">
+              <div className="mb-6">
+                <Link to={homeTarget} onClick={handleHomeClick}>
+                  <img src={logoSrc} alt="Taskademy" className="h-20 w-auto object-contain hover:opacity-80 transition-opacity" />
+                </Link>
               </div>
               <p className="text-foreground/60 text-lg leading-relaxed max-w-sm mb-8">
-                Empowering students to build real-world experience through meaningful tasks. Learn, work, and earn.
+                {t("empoweringStudents") || "Empowering students to build real-world experience through meaningful tasks. Learn, work, and earn."}
               </p>
             </div>
 
-            <div className="col-span-1">
-              <h4 className="font-bold text-lg mb-6 text-foreground">Platform</h4>
+            <div className="lg:col-span-1">
+              <h4 className="font-bold text-lg mb-6 text-foreground tracking-tight">{t("platform") || "Platform"}</h4>
               <ul className="space-y-4">
-                <li><Link to="/browse" className="text-foreground/60 hover:text-primary transition-colors">Browse Tasks</Link></li>
-                <li><a href="#how-it-works" className="text-foreground/60 hover:text-primary transition-colors">How it Works</a></li>
-                <li><Link to="/register" className="text-foreground/60 hover:text-primary transition-colors">Get Started</Link></li>
+                <li><Link to="/browse" className="text-foreground/60 hover:text-primary transition-colors flex items-center gap-2 group"><div className="w-1.5 h-1.5 rounded-full bg-primary/0 group-hover:bg-primary transition-all" />{t("browseTasks") || "Browse Tasks"}</Link></li>
+                <li><a href="#how-it-works" className="text-foreground/60 hover:text-primary transition-colors flex items-center gap-2 group"><div className="w-1.5 h-1.5 rounded-full bg-primary/0 group-hover:bg-primary transition-all" />{t("howItWorks") || "How it Works"}</a></li>
+                <li><Link to="/register" className="text-foreground/60 hover:text-primary transition-colors flex items-center gap-2 group"><div className="w-1.5 h-1.5 rounded-full bg-primary/0 group-hover:bg-primary transition-all" />{t("getStarted") || "Get Started"}</Link></li>
               </ul>
             </div>
 
-            <div className="col-span-1">
-              <h4 className="font-bold text-lg mb-6 text-foreground">Support</h4>
+            <div className="lg:col-span-1">
+              <h4 className="font-bold text-lg mb-6 text-foreground tracking-tight">{t("support") || "Support"}</h4>
               <ul className="space-y-4">
-                <li><a href="#" className="text-foreground/60 hover:text-primary transition-colors">Help Center</a></li>
-                <li><a href="#" className="text-foreground/60 hover:text-primary transition-colors">Safety</a></li>
-                <li><a href="#" className="text-foreground/60 hover:text-primary transition-colors">Contact</a></li>
+                <li><Link to="/help" className="text-foreground/60 hover:text-primary transition-colors flex items-center gap-2 group"><div className="w-1.5 h-1.5 rounded-full bg-primary/0 group-hover:bg-primary transition-all" />{t("helpCenter") || "Help Center"}</Link></li>
+                <li><Link to="/safety" className="text-foreground/60 hover:text-primary transition-colors flex items-center gap-2 group"><div className="w-1.5 h-1.5 rounded-full bg-primary/0 group-hover:bg-primary transition-all" />{t("safety") || "Safety"}</Link></li>
+                <li><Link to="/contact" className="text-foreground/60 hover:text-primary transition-colors flex items-center gap-2 group"><div className="w-1.5 h-1.5 rounded-full bg-primary/0 group-hover:bg-primary transition-all" />{t("contact") || "Contact"}</Link></li>
               </ul>
             </div>
 
-            <div className="col-span-1">
-              <h4 className="font-bold text-lg mb-6 text-foreground">Company</h4>
+            <div className="lg:col-span-1">
+              <h4 className="font-bold text-lg mb-6 text-foreground tracking-tight">{t("company") || "Company"}</h4>
               <ul className="space-y-4">
-                <li><Link to="/about" className="text-foreground/60 hover:text-primary transition-colors">About Us</Link></li>
-                <li><a href="#" className="text-foreground/60 hover:text-primary transition-colors">Careers</a></li>
-                <li><a href="#" className="text-foreground/60 hover:text-primary transition-colors">Blog</a></li>
+                <li><Link to="/about" className="text-foreground/60 hover:text-primary transition-colors">{t("aboutUs") || "About Us"}</Link></li>
+                <li><Link to="/careers" className="text-foreground/60 hover:text-primary transition-colors">{t("careers") || "Careers"}</Link></li>
+                <li><Link to="/blog" className="text-foreground/60 hover:text-primary transition-colors">{t("blog") || "Blog"}</Link></li>
               </ul>
             </div>
 
-            <div className="col-span-1">
-              <h4 className="font-bold text-lg mb-6 text-foreground">Legal</h4>
-              <ul className="space-y-4">
-                <li><Link to="/terms" className="text-foreground/60 hover:text-primary transition-colors">Terms</Link></li>
-                <li><Link to="/privacy" className="text-foreground/60 hover:text-primary transition-colors">Privacy</Link></li>
-                <li><a href="#" className="text-foreground/60 hover:text-primary transition-colors">Cookies</a></li>
-              </ul>
-            </div>
+          {/* Legal column removed as requested - links preserved in the bottom row */}
           </div>
 
-          <div className="border-t border-border pt-8 text-center text-foreground/40 text-sm">
+          <div className="border-t border-border/50 pt-12 flex flex-col md:flex-row justify-between items-center gap-6 text-foreground/40 text-sm">
             <p>&copy; 2026 Taskademy Inc. All rights reserved.</p>
+            <div className="flex gap-8">
+              <Link to="/terms" className="hover:text-primary transition-colors">{t("terms") || "Terms"}</Link>
+              <Link to="/privacy" className="hover:text-primary transition-colors">{t("privacy") || "Privacy"}</Link>
+              <Link to="/cookies" className="hover:text-primary transition-colors">{t("cookies") || "Cookies"}</Link>
+            </div>
           </div>
         </div>
       </footer>

@@ -10,6 +10,8 @@ interface AppContextType {
   toggleSidebar: () => void;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
+  language: string;
+  setLanguage: (lang: string) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -22,10 +24,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     localStorage.getItem("sidebar-collapsed") === "true"
   );
   const [searchQuery, setSearchQuery] = useState("");
+  const [language, setLanguageState] = useState(
+    localStorage.getItem("app-language") || "en"
+  );
 
   const setTheme = (newTheme: Theme) => {
     setThemeState(newTheme);
     localStorage.setItem("app-theme", newTheme);
+  };
+
+  const setLanguage = (lang: string) => {
+    setLanguageState(lang);
+    localStorage.setItem("app-language", lang);
   };
 
   const toggleSidebar = () => {
@@ -56,6 +66,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         toggleSidebar,
         searchQuery,
         setSearchQuery,
+        language,
+        setLanguage,
       }}
     >
       {children}

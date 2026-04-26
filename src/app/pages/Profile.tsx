@@ -1,13 +1,14 @@
 import { Link, useParams } from "react-router";
 import { motion } from "motion/react";
-import { ArrowLeft, Star, Mail, MapPin, Calendar, ExternalLink, Upload, FileText, Plus, X } from "lucide-react";
+import { ArrowLeft, Star, Mail, MapPin, Calendar, ExternalLink, Upload, FileText, Plus, X, Heart, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { userService } from "../services/user.service";
 import { ResumeManual, User as UserType } from "../types/api";
 import { useAuth } from "../contexts/AuthContext";
 import { toast } from "sonner";
+import { useTranslation } from "../hooks/useTranslation";
 
-const portfolioProjects = [
+const defaultPortfolioProjects = [
   {
     id: 1,
     title: "E-commerce Dashboard",
@@ -19,18 +20,6 @@ const portfolioProjects = [
     title: "Mobile Banking App",
     description: "UI/UX design for fintech application",
     image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=600&fit=crop"
-  },
-  {
-    id: 3,
-    title: "Travel Booking Platform",
-    description: "Full-stack booking system with React",
-    image: "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&h=600&fit=crop"
-  },
-  {
-    id: 4,
-    title: "Fitness Tracker App",
-    description: "Mobile app for workout tracking",
-    image: "https://images.unsplash.com/photo-1476480862126-209bfaa8edc8?w=800&h=600&fit=crop"
   }
 ];
 
@@ -66,6 +55,7 @@ const emptyResume = (): ResumeManual => ({
 });
 
 export default function Profile() {
+  const { t } = useTranslation();
   const params = useParams();
   const { user, refreshUser } = useAuth();
   const userId = Number(params.id);
@@ -82,6 +72,40 @@ export default function Profile() {
   const [resumeMode, setResumeMode] = useState<'upload' | 'manual' | null>(null);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [manualResume, setManualResume] = useState<ResumeManual>(emptyResume);
+  const [portfolioProjects, setPortfolioProjects] = useState<any[]>(defaultPortfolioProjects);
+  const [isAddingProject, setIsAddingProject] = useState(false);
+  const [newProject, setNewProject] = useState({ title: "", description: "", image: "" });
+
+  useEffect(() => {
+    if (userId) {
+      const savedProjects = localStorage.getItem(`portfolio_${userId}`);
+      if (savedProjects) {
+        setPortfolioProjects(JSON.parse(savedProjects));
+      } else {
+        setPortfolioProjects(defaultPortfolioProjects);
+      }
+    }
+  }, [userId]);
+
+  const handleAddProject = () => {
+    if (!newProject.title || !newProject.description) {
+      toast.error("Please fill in title and description.");
+      return;
+    }
+    const updated = [{ ...newProject, id: Date.now(), image: newProject.image || "https://images.unsplash.com/photo-1507238692062-870ce5f14e5b?w=800&h=600&fit=crop" }, ...portfolioProjects];
+    setPortfolioProjects(updated);
+    localStorage.setItem(`portfolio_${userId}`, JSON.stringify(updated));
+    setNewProject({ title: "", description: "", image: "" });
+    setIsAddingProject(false);
+    toast.success("Project added to portfolio!");
+  };
+
+  const handleDeleteProject = (projectId: number) => {
+    const updated = portfolioProjects.filter(p => p.id !== projectId);
+    setPortfolioProjects(updated);
+    localStorage.setItem(`portfolio_${userId}`, JSON.stringify(updated));
+    toast.success("Project removed.");
+  };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -208,6 +232,19 @@ export default function Profile() {
     }
   };
 
+  const profileCompletion = useMemo(() => {
+    if (!profileUser) return 0;
+    const fields = [
+      profileUser.name,
+      profileUser.bio,
+      profileUser.avatar_url,
+      profileUser.skills?.length ? true : false,
+      profileUser.resume_url || profileUser.resume_manual ? true : false
+    ];
+    const completed = fields.filter(Boolean).length;
+    return Math.round((completed / fields.length) * 100);
+  }, [profileUser]);
+
   const initials = useMemo(() => {
     const name = profileUser?.name?.trim();
     if (!name) return "U";
@@ -303,7 +340,7 @@ export default function Profile() {
           className="inline-flex items-center gap-2 text-foreground/60 hover:text-foreground mb-8 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
-          Back to Dashboard
+          {t("backToDashboard") || "Back to Dashboard"}
         </Link>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -341,9 +378,20 @@ export default function Profile() {
                     <Star className="w-5 h-5 fill-primary text-primary" />
                     <span className="font-medium">{profileUser?.rating ?? "0.00"}</span>
                     <span className="text-foreground/60">
-                      ({profileUser?.completed_tasks ?? 0} completed)
+                      ({profileUser?.completed_tasks ?? 0} {t("completed") || "completed"})
                     </span>
                   </div>
+                  {isResumeOwner && profileUser?.role === 'student' && profileCompletion < 100 && (
+                    <div className="mt-4 max-w-xs">
+                      <div className="flex justify-between text-xs mb-1 font-bold text-emerald-500">
+                        <span>{t("profileCompletionScore") || "Profile Completion Score"}</span>
+                        <span>{profileCompletion}%</span>
+                      </div>
+                      <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                        <div className="h-full bg-emerald-500" style={{ width: `${profileCompletion}%` }} />
+                      </div>
+                    </div>
+                  )}
                 </div>
                 {canEditProfile && (
                   editing ? (
@@ -366,14 +414,36 @@ export default function Profile() {
                       </button>
                     </div>
                   ) : (
-                    <button
-                      type="button"
-                      onClick={() => setEditing(true)}
-                      className="px-6 py-3 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all"
-                    >
-                      Edit Profile
-                    </button>
+                      <button
+                        type="button"
+                        onClick={() => setEditing(true)}
+                        className="px-6 py-3 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all font-bold"
+                      >
+                        {t("editProfile") || "Edit Profile"}
+                      </button>
                   )
+                )}
+                {!canEditProfile && user?.role === 'client' && profileUser?.role === 'student' && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const saved = JSON.parse(localStorage.getItem('saved_students') || '[]');
+                      if (saved.find((s: any) => s.id === profileUser.id)) {
+                        const filtered = saved.filter((s: any) => s.id !== profileUser.id);
+                        localStorage.setItem('saved_students', JSON.stringify(filtered));
+                        toast.success("Student removed from your list");
+                      } else {
+                        saved.push({ id: profileUser.id, name: profileUser.name, avatar: profileUser.avatar_url, skills: profileUser.skills });
+                        localStorage.setItem('saved_students', JSON.stringify(saved));
+                        toast.success("Student saved to your list!");
+                      }
+                      window.dispatchEvent(new Event('storage')); // Trigger update
+                    }}
+                    className="px-6 py-3 rounded-xl bg-blue-500/10 text-blue-500 hover:bg-blue-500 hover:text-white transition-all flex items-center gap-2 font-bold"
+                  >
+                    <Heart className="w-5 h-5" />
+                    Save Student
+                  </button>
                 )}
               </div>
 
@@ -480,39 +550,97 @@ export default function Profile() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
-            <h2 className="text-2xl font-bold mb-6">Portfolio</h2>
-            <div className="grid md:grid-cols-2 gap-6">
-              {portfolioProjects.map((project, index) => (
-                <motion.div
-                  key={project.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: 0.3 + index * 0.1 }}
-                  className="bg-card rounded-2xl overflow-hidden border border-border hover:border-primary/50 transition-all group"
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold">{t("portfolio") || "Portfolio"}</h2>
+              {canEditProfile && (
+                <button 
+                  onClick={() => setIsAddingProject(!isAddingProject)}
+                  className="px-4 py-2 rounded-xl bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground transition-all flex items-center gap-2 text-sm font-bold"
                 >
-                  <div className="aspect-video bg-muted relative overflow-hidden">
-                    <img
-                      src={project.image}
-                      alt={project.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                  </div>
-                  <div className="p-6">
-                    <h3 className="text-xl font-bold mb-2 group-hover:text-primary transition-colors">
-                      {project.title}
-                    </h3>
-                    <p className="text-foreground/70 mb-4">{project.description}</p>
-                    <a
-                      href="#"
-                      className="inline-flex items-center gap-2 text-primary hover:underline"
-                    >
-                      View Project
-                      <ExternalLink className="w-4 h-4" />
-                    </a>
-                  </div>
-                </motion.div>
-              ))}
+                  <Plus className="w-4 h-4" />
+                  {isAddingProject ? "Cancel" : "Add Project"}
+                </button>
+              )}
             </div>
+
+            {isAddingProject && (
+              <div className="mb-8 bg-card rounded-2xl p-6 border border-primary/20 space-y-4">
+                <input 
+                  type="text" 
+                  placeholder="Project Title"
+                  value={newProject.title}
+                  onChange={(e) => setNewProject({...newProject, title: e.target.value})}
+                  className="w-full px-4 py-2 rounded-xl bg-input border border-border focus:border-primary outline-none"
+                />
+                <textarea 
+                  placeholder="Short Description"
+                  value={newProject.description}
+                  onChange={(e) => setNewProject({...newProject, description: e.target.value})}
+                  className="w-full px-4 py-2 rounded-xl bg-input border border-border focus:border-primary outline-none resize-none"
+                  rows={2}
+                />
+                <input 
+                  type="text" 
+                  placeholder="Image URL (Optional)"
+                  value={newProject.image}
+                  onChange={(e) => setNewProject({...newProject, image: e.target.value})}
+                  className="w-full px-4 py-2 rounded-xl bg-input border border-border focus:border-primary outline-none"
+                />
+                <button 
+                  onClick={handleAddProject}
+                  className="px-6 py-2 rounded-xl bg-primary text-primary-foreground font-bold hover:bg-primary/90 transition-all"
+                >
+                  Save Project
+                </button>
+              </div>
+            )}
+
+            {portfolioProjects.length === 0 ? (
+              <div className="text-center py-12 border border-dashed border-border rounded-2xl text-foreground/40 italic">
+                No portfolio projects added yet.
+              </div>
+            ) : (
+              <div className="grid md:grid-cols-2 gap-6">
+                {portfolioProjects.map((project, index) => (
+                  <motion.div
+                    key={project.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6, delay: 0.3 + index * 0.1 }}
+                    className="bg-card rounded-2xl overflow-hidden border border-border hover:border-primary/50 transition-all group relative"
+                  >
+                    <div className="aspect-video bg-muted relative overflow-hidden">
+                      <img
+                        src={project.image}
+                        alt={project.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                    </div>
+                    <div className="p-6">
+                      <h3 className="text-xl font-bold mb-2 group-hover:text-primary transition-colors">
+                        {project.title}
+                      </h3>
+                      <p className="text-foreground/70 mb-4">{project.description}</p>
+                      <a
+                        href="#"
+                        className="inline-flex items-center gap-2 text-primary hover:underline"
+                      >
+                        View Project
+                        <ExternalLink className="w-4 h-4" />
+                      </a>
+                    </div>
+                    {canEditProfile && (
+                      <button 
+                        onClick={() => handleDeleteProject(project.id)}
+                        className="absolute top-4 right-4 p-2 bg-black/50 hover:bg-red-500 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-all backdrop-blur-sm"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
+                  </motion.div>
+                ))}
+              </div>
+            )}
           </motion.div>
         )}
         {activeTab === 'reviews' && (

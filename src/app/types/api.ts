@@ -15,6 +15,8 @@ export interface User {
   completed_tasks?: number;
   completedTasks?: number;
   tasksAsStudent?: Task[];
+  is_banned?: boolean;
+  ban_reason?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -50,7 +52,7 @@ export interface Task {
   image_url?: string | null;
   budget: number;
   deadline: string;
-  status: 'open' | 'in_progress' | 'completed' | 'cancelled';
+  status: 'open' | 'in_progress' | 'completed' | 'cancelled' | 'draft';
   moderation_status: 'pending' | 'approved' | 'rejected';
   rejection_reason?: string | null;
   archived_at?: string | null;
@@ -126,4 +128,14 @@ export interface PaginatedResponse<T> {
   last_page: number;
   per_page: number;
   total: number;
+}
+
+export interface Announcement {
+  id: number;
+  title: string;
+  content: string;
+  type: 'info' | 'warning' | 'urgent';
+  admin_id: number;
+  is_active: boolean;
+  created_at: string;
 }

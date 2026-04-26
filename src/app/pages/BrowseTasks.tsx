@@ -7,8 +7,12 @@ import { taskService } from "../services/task.service";
 import { Task } from "../types/api";
 import { toast } from "sonner";
 import { formatPeso } from "../utils/currency";
+import { useTranslation } from "../hooks/useTranslation";
+import { useAuth } from "../contexts/AuthContext";
 
 export default function BrowseTasks() {
+  const { user } = useAuth();
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -58,10 +62,10 @@ export default function BrowseTasks() {
             className="inline-flex items-center gap-2 text-foreground/60 hover:text-foreground mb-6 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back to Dashboard
+            {t("backToDashboard") || "Back to Dashboard"}
           </Link>
-          <h1 className="text-4xl font-bold mb-2">Browse Tasks</h1>
-          <p className="text-foreground/60">Find your next opportunity</p>
+          <h1 className="text-4xl font-bold mb-2">{t("browseTasks") || "Browse Tasks"}</h1>
+          <p className="text-foreground/60">{t("findNextOpportunity") || "Find your next opportunity"}</p>
         </div>
       </header>
 
@@ -78,7 +82,7 @@ export default function BrowseTasks() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search tasks..."
+              placeholder={t("searchTasksPlaceholder") || "Search tasks..."}
               className="w-full pl-12 pr-4 py-4 rounded-xl bg-card border border-border focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
             />
           </div>
@@ -114,7 +118,13 @@ export default function BrowseTasks() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: index * 0.05 }}
-                className="bg-card rounded-2xl p-6 border border-border hover:border-primary/50 transition-all group"
+                className={`bg-card rounded-2xl p-6 border transition-all group ${
+                  user?.role === 'admin' 
+                    ? 'border-amber-500/10 hover:border-amber-500/30 shadow-[0_0_10px_-3px_rgba(245,158,11,0.05)]' 
+                    : user?.role === 'client'
+                    ? 'border-blue-500/10 hover:border-blue-500/30 shadow-[0_0_10px_-3px_rgba(59,130,246,0.05)]'
+                    : 'border-emerald-500/10 hover:border-emerald-500/30 shadow-[0_0_10px_-3px_rgba(16,185,129,0.05)]'
+                }`}
               >
                 <div className="flex items-start justify-between gap-6">
                   <div className="flex-1">

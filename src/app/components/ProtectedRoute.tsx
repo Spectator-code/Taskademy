@@ -3,10 +3,10 @@ import { useAuth } from '../contexts/AuthContext';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  requiredRole?: 'admin' | 'client' | 'student';
+  allowedRoles?: ('admin' | 'client' | 'student')[];
 }
 
-export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {
+export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
   const { user, loading } = useAuth();
 
   if (loading) {
@@ -23,8 +23,12 @@ export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) 
   if (!user) {
     return <Navigate to="/login" replace />;
   }
+  
+  if (user.is_banned) {
+    return <Navigate to="/suspended" replace />;
+  }
 
-  if (requiredRole && user.role !== requiredRole) {
+  if (allowedRoles && !allowedRoles.includes(user.role as any)) {
     return <Navigate to="/dashboard" replace />;
   }
 

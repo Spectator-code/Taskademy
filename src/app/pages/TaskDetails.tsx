@@ -7,8 +7,10 @@ import { Task, TaskApplication } from "../types/api";
 import { useAuth } from "../contexts/AuthContext";
 import { toast } from "sonner";
 import { formatPeso } from "../utils/currency";
+import { useTranslation } from "../hooks/useTranslation";
 
 export default function TaskDetails() {
+  const { t } = useTranslation();
   const { id } = useParams();
   const { user } = useAuth();
   const [task, setTask] = useState<Task | null>(null);
@@ -130,14 +132,31 @@ export default function TaskDetails() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Task not found</h1>
+          <h1 className="text-2xl font-bold mb-4">{t("taskNotFound") || "Task not found"}</h1>
           <Link to="/browse" className="text-primary hover:underline">
-            Browse other tasks
+            {t("browseOtherTasks") || "Browse other tasks"}
           </Link>
         </div>
       </div>
     );
   }
+
+  const isSaved = JSON.parse(localStorage.getItem('saved_tasks') || '[]').includes(task.id);
+
+  const toggleSave = () => {
+    const saved = JSON.parse(localStorage.getItem('saved_tasks') || '[]');
+    if (saved.includes(task.id)) {
+      const filtered = saved.filter((id: number) => id !== task.id);
+      localStorage.setItem('saved_tasks', JSON.stringify(filtered));
+      toast.success("Task removed from saved items");
+    } else {
+      saved.push(task.id);
+      localStorage.setItem('saved_tasks', JSON.stringify(saved));
+      toast.success(t("taskSaved") || "Task saved!");
+    }
+    // Re-render
+    setTask({ ...task });
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -147,7 +166,7 @@ export default function TaskDetails() {
           className="inline-flex items-center gap-2 text-foreground/60 hover:text-foreground mb-8 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
-          Back to Browse
+          {t("backToBrowse") || "Back to Browse"}
         </Link>
 
         <div className="grid lg:grid-cols-3 gap-8">
@@ -177,7 +196,7 @@ export default function TaskDetails() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Clock className="w-5 h-5" />
-                  Deadline: {new Date(task.deadline).toLocaleDateString()}
+                  {t("deadline") || "Deadline"}: {new Date(task.deadline).toLocaleDateString()}
                 </div>
               </div>
             </div>
@@ -193,14 +212,14 @@ export default function TaskDetails() {
             )}
 
             <div className="bg-card rounded-2xl p-6 border border-border">
-              <h2 className="text-2xl font-bold mb-4">Description</h2>
+              <h2 className="text-2xl font-bold mb-4">{t("description") || "Description"}</h2>
               <p className="text-foreground/70 leading-relaxed mb-6">
                 {task.description}
               </p>
 
               {requirements.length > 0 && (
                 <>
-                  <h3 className="text-xl font-bold mb-4">Requirements</h3>
+                  <h3 className="text-xl font-bold mb-4">{t("requirements") || "Requirements"}</h3>
                   <ul className="space-y-3">
                     {requirements.map((requirement) => (
                       <li key={requirement} className="flex items-start gap-3">
@@ -214,7 +233,7 @@ export default function TaskDetails() {
             </div>
 
             <div className="bg-card rounded-2xl p-6 border border-border">
-              <h2 className="text-2xl font-bold mb-4">Posted By</h2>
+              <h2 className="text-2xl font-bold mb-4">{t("postedBy") || "Posted By"}</h2>
               <div className="flex items-center gap-4">
                 {task.client?.avatar_url ? (
                   <img
@@ -247,9 +266,9 @@ export default function TaskDetails() {
 
             {canManageApplications && (
               <div className="bg-card rounded-2xl p-6 border border-border">
-                <h2 className="text-2xl font-bold mb-4">Applicants</h2>
+                <h2 className="text-2xl font-bold mb-4">{t("applicants") || "Applicants"}</h2>
                 {applications.length === 0 ? (
-                  <p className="text-foreground/60">No one has applied yet.</p>
+                  <p className="text-foreground/60">{t("noApplicantsYet") || "No one has applied yet."}</p>
                 ) : (
                   <div className="space-y-4">
                     {applications.map((application) => (
@@ -290,10 +309,10 @@ export default function TaskDetails() {
                           >
                             <CheckCircle className="w-4 h-4" />
                             {application.status === "accepted"
-                              ? "Accepted"
+                              ? t("accepted") || "Accepted"
                               : acceptingId === application.applicant_id
-                              ? "Accepting..."
-                              : "Accept"}
+                              ? t("accepting") || "Accepting..."
+                              : t("accept") || "Accept"}
                           </button>
                         </div>
                       </div>
@@ -314,24 +333,29 @@ export default function TaskDetails() {
               <button
                 onClick={handleApply}
                 disabled={applying || !canApply}
-                className="w-full px-6 py-4 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full px-6 py-4 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed font-bold"
               >
                 {task.moderation_status !== "approved"
-                  ? "Waiting for Approval"
+                  ? t("waitingForApproval") || "Waiting for Approval"
                   : task.status !== "open"
-                  ? "Task Closed"
+                  ? t("taskClosed") || "Task Closed"
                   : user?.role === "client"
-                  ? "Clients Cannot Apply"
+                  ? t("clientsCannotApply") || "Clients Cannot Apply"
                   : task.client_id === user?.id
-                  ? "Your Task"
+                  ? t("yourTask") || "Your Task"
                   : applying
-                  ? "Submitting..."
-                  : "Apply for Task"}
+                  ? "..."
+                  : t("applyForTask") || "Apply for Task"}
               </button>
 
-              <button className="w-full px-6 py-3 rounded-xl bg-card border border-border hover:bg-muted transition-all flex items-center justify-center gap-2">
-                <Heart className="w-5 h-5" />
-                Save Task
+              <button 
+                onClick={toggleSave}
+                className={`w-full px-6 py-3 rounded-xl border transition-all flex items-center justify-center gap-2 font-bold ${
+                  isSaved ? 'bg-red-500/10 border-red-500 text-red-500' : 'bg-card border-border hover:bg-muted'
+                }`}
+              >
+                <Heart className={`w-5 h-5 ${isSaved ? 'fill-red-500' : ''}`} />
+                {isSaved ? "Saved" : t("saveTask") || "Save Task"}
               </button>
 
               <div className="pt-6 border-t border-border space-y-3 text-sm">

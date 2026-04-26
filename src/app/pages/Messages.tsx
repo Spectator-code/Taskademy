@@ -7,6 +7,7 @@ import { getEcho } from "../config/echo";
 import { useAuth } from "../contexts/AuthContext";
 import { messageService } from "../services/message.service";
 import { Conversation, Message } from "../types/api";
+import { useTranslation } from "../hooks/useTranslation";
 
 function formatTime(value?: string) {
   if (!value) {
@@ -21,6 +22,7 @@ function formatTime(value?: string) {
 }
 
 export default function Messages() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [selectedChat, setSelectedChat] = useState<number | null>(null);
   const [messageText, setMessageText] = useState("");
@@ -201,9 +203,9 @@ export default function Messages() {
           className="inline-flex items-center gap-2 text-foreground/60 hover:text-foreground mb-4 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
-          Back to Dashboard
+          {t("backToDashboard") || "Back to Dashboard"}
         </Link>
-        <h1 className="text-3xl font-bold">Messages</h1>
+        <h1 className="text-3xl font-bold">{t("messages") || "Messages"}</h1>
       </div>
 
       <div className="flex-1 flex overflow-hidden">
@@ -220,7 +222,7 @@ export default function Messages() {
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search conversations..."
+                placeholder={t("searchConversations") || "Search conversations..."}
                 className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-card border border-border focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
               />
             </div>
@@ -232,7 +234,7 @@ export default function Messages() {
                 <Loader2 className="w-5 h-5 animate-spin" />
               </div>
             ) : filteredConversations.length === 0 ? (
-              <div className="p-6 text-sm text-foreground/60">No conversations found.</div>
+              <div className="p-6 text-sm text-foreground/60">{t("noConversationsFound") || "No conversations found."}</div>
             ) : (
               filteredConversations.map((conv) => {
                 const otherUser = conv.user1_id === user?.id ? conv.user2 : conv.user1;
@@ -305,7 +307,7 @@ export default function Messages() {
                   </div>
                 ) : messages.length === 0 ? (
                   <div className="h-full flex items-center justify-center text-sm text-foreground/60">
-                    Start the conversation.
+                    {t("startConversation") || "Start the conversation."}
                   </div>
                 ) : (
                   messages.map((msg) => {
@@ -343,27 +345,27 @@ export default function Messages() {
                     type="text"
                     value={messageText}
                     onChange={(e) => setMessageText(e.target.value)}
-                    placeholder="Type a message..."
+                    placeholder={t("typeAMessage") || "Type a message..."}
                     className="flex-1 px-4 py-3 rounded-xl bg-card border border-border focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
                   />
                   <button
                     type="submit"
                     disabled={sending || !messageText.trim()}
-                    className="px-6 py-3 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-6 py-3 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed font-bold"
                   >
                     {sending ? (
                       <Loader2 className="w-5 h-5 animate-spin" />
                     ) : (
                       <Send className="w-5 h-5" />
                     )}
-                    Send
+                    {t("send") || "Send"}
                   </button>
                 </div>
               </form>
             </>
           ) : (
             <div className="flex-1 flex items-center justify-center text-sm text-foreground/60">
-              Select a conversation.
+              {t("selectAConversation") || "Select a conversation."}
             </div>
           )}
         </motion.div>

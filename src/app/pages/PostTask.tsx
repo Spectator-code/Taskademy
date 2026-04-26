@@ -1,12 +1,16 @@
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate, useSearchParams } from "react-router";
 import { motion } from "motion/react";
 import { ArrowLeft, PhilippinePeso, Calendar, Tag, Image as ImageIcon } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { taskService } from "../services/task.service";
 import { toast } from "sonner";
+import { useTranslation } from "../hooks/useTranslation";
 
 export default function PostTask() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const draftId = searchParams.get('draft');
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
@@ -18,25 +22,53 @@ export default function PostTask() {
   });
   const [taskImage, setTaskImage] = useState<File | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  useEffect(() => {
+    if (draftId) {
+      setLoading(true);
+      taskService.getTaskById(parseInt(draftId))
+        .then(task => {
+          setFormData({
+            title: task.title,
+            description: task.description,
+            requirements: task.requirements || "",
+            budget: String(task.budget),
+            deadline: task.deadline.split('T')[0],
+            category: task.category
+          });
+        })
+        .catch(() => toast.error("Failed to load draft."))
+        .finally(() => setLoading(false));
+    }
+  }, [draftId]);
+
+  const handleSubmit = async (e: React.FormEvent, isDraft = false) => {
+    if (e) e.preventDefault();
     setLoading(true);
 
     try {
-      const task = await taskService.createTask({
+      const payload = {
         title: formData.title,
         category: formData.category,
         description: formData.description,
         requirements: formData.requirements,
-        budget: parseFloat(formData.budget),
+        budget: parseFloat(formData.budget) || 0,
         deadline: formData.deadline,
         image: taskImage,
-      });
+        status: isDraft ? 'draft' : 'open'
+      } as any;
 
-      toast.success("Task posted successfully!");
-      navigate(`/task/${task.id}`);
+      const task = draftId 
+        ? await taskService.updateTask(parseInt(draftId), payload)
+        : await taskService.createTask(payload);
+
+      toast.success(isDraft ? "Task saved as draft!" : "Task posted successfully!");
+      if (isDraft) {
+        navigate('/dashboard');
+      } else {
+        navigate(`/task/${task.id}`);
+      }
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "Failed to post task. Please try again.");
+      toast.error(error.response?.data?.message || `Failed to ${isDraft ? 'save draft' : 'post task'}. Please try again.`);
     } finally {
       setLoading(false);
     }
@@ -66,7 +98,7 @@ export default function PostTask() {
           className="inline-flex items-center gap-2 text-foreground/60 hover:text-foreground mb-8 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
-          Back to Dashboard
+          {t("backToDashboard")}
         </Link>
 
         <motion.div
@@ -74,14 +106,14 @@ export default function PostTask() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
-          <h1 className="text-4xl font-bold mb-2">Post a New Task</h1>
+          <h1 className="text-4xl font-bold mb-2">{t("postTask")}</h1>
           <p className="text-foreground/60 mb-8">
             Find talented students to help with your project
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="bg-card rounded-2xl p-6 border border-border">
-              <label htmlFor="title" className="block mb-3">
+              <label htmlFor="title" className="block mb-3 font-bold">
                 Task Title
               </label>
               <input
@@ -96,7 +128,7 @@ export default function PostTask() {
               />
             </div>
             <div className="bg-card rounded-2xl p-6 border border-border">
-              <label htmlFor="category" className="block mb-3">
+              <label htmlFor="category" className="block mb-3 font-bold">
                 <Tag className="inline w-4 h-4 mr-2" />
                 Category
               </label>
@@ -117,8 +149,8 @@ export default function PostTask() {
               </select>
             </div>
             <div className="bg-card rounded-2xl p-6 border border-border">
-              <label htmlFor="description" className="block mb-3">
-                Description
+              <label htmlFor="description" className="block mb-3 font-bold">
+                {t("description")}
               </label>
               <textarea
                 id="description"
@@ -132,8 +164,8 @@ export default function PostTask() {
               />
             </div>
             <div className="bg-card rounded-2xl p-6 border border-border">
-              <label htmlFor="requirements" className="block mb-3">
-                Requirements
+              <label htmlFor="requirements" className="block mb-3 font-bold">
+                {t("requirements")}
               </label>
               <textarea
                 id="requirements"
@@ -147,7 +179,7 @@ export default function PostTask() {
               />
             </div>
             <div className="bg-card rounded-2xl p-6 border border-border">
-              <label htmlFor="image" className="block mb-3">
+              <label htmlFor="image" className="block mb-3 font-bold">
                 <ImageIcon className="inline w-4 h-4 mr-2" />
                 Task Image
               </label>
@@ -165,7 +197,7 @@ export default function PostTask() {
             </div>
             <div className="grid md:grid-cols-2 gap-6">
               <div className="bg-card rounded-2xl p-6 border border-border">
-                <label htmlFor="budget" className="block mb-3">
+                <label htmlFor="budget" className="block mb-3 font-bold">
                   <PhilippinePeso className="inline w-4 h-4 mr-2" />
                   Budget
                 </label>
@@ -185,7 +217,7 @@ export default function PostTask() {
               </div>
 
               <div className="bg-card rounded-2xl p-6 border border-border">
-                <label htmlFor="deadline" className="block mb-3">
+                <label htmlFor="deadline" className="block mb-3 font-bold">
                   <Calendar className="inline w-4 h-4 mr-2" />
                   Deadline
                 </label>
@@ -200,17 +232,25 @@ export default function PostTask() {
                 />
               </div>
             </div>
-            <div className="flex gap-4">
+            <div className="flex flex-col sm:flex-row gap-4">
               <button
                 type="submit"
                 disabled={loading}
-                className="flex-1 px-8 py-4 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-[2] px-8 py-4 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed font-bold"
               >
-                {loading ? "Posting..." : "Post Task"}
+                {loading ? "Processing..." : "Post Task Now"}
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSubmit(null as any, true)}
+                disabled={loading || !formData.title}
+                className="flex-1 px-8 py-4 rounded-xl bg-card border border-border hover:bg-muted transition-all font-bold disabled:opacity-50"
+              >
+                {t("draftTasks")}
               </button>
               <Link
                 to="/dashboard"
-                className="px-8 py-4 rounded-xl bg-card border border-border hover:bg-muted transition-all text-center"
+                className="px-8 py-4 rounded-xl bg-card border border-border hover:bg-muted transition-all text-center flex-1 font-bold"
               >
                 Cancel
               </Link>
