@@ -5,6 +5,13 @@ import { useState, useEffect } from "react";
 import { taskService } from "../services/task.service";
 import { toast } from "sonner";
 import { useTranslation } from "../hooks/useTranslation";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../components/ui/select";
 
 export default function PostTask() {
   const { t } = useTranslation();
@@ -132,21 +139,19 @@ export default function PostTask() {
                 <Tag className="inline w-4 h-4 mr-2" />
                 Category
               </label>
-              <select
-                id="category"
-                name="category"
-                value={formData.category}
-                onChange={handleChange}
-                className="w-full px-4 py-3 rounded-xl bg-input border border-border focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
-                required
-              >
-                <option value="Design">Design</option>
-                <option value="Development">Development</option>
-                <option value="Writing">Writing</option>
-                <option value="Marketing">Marketing</option>
-                <option value="Admin">Admin</option>
-                <option value="Other">Other</option>
-              </select>
+              <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Design">Design</SelectItem>
+                  <SelectItem value="Development">Development</SelectItem>
+                  <SelectItem value="Writing">Writing</SelectItem>
+                  <SelectItem value="Marketing">Marketing</SelectItem>
+                  <SelectItem value="Admin">Admin</SelectItem>
+                  <SelectItem value="Other">Other</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="bg-card rounded-2xl p-6 border border-border">
               <label htmlFor="description" className="block mb-3 font-bold">
