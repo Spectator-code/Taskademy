@@ -34,6 +34,27 @@ export const userService = {
     return response.data;
   },
 
+  async deleteResume(): Promise<User> {
+    const response = await apiClient.delete<User>('/users/resume');
+    return response.data;
+  },
+
+  async uploadIdDocument(file: File): Promise<User> {
+    const formData = new FormData();
+    formData.append('id_document', file);
+    const response = await apiClient.post<User>('/users/id-document', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
+
+  async deleteIdDocument(): Promise<User> {
+    const response = await apiClient.delete<User>('/users/id-document');
+    return response.data;
+  },
+
   async updateResume(id: number, resume_manual: ResumeManual | null): Promise<User> {
     const response = await apiClient.put<User>(`/users/${id}`, { resume_manual });
     return response.data;

@@ -9,6 +9,9 @@ export interface User {
   resume_file_name?: string | null;
   resume_url?: string | null;
   resume_manual?: ResumeManual | null;
+  id_document_path?: string | null;
+  id_document_name?: string | null;
+  id_document_url?: string | null;
   bio?: string;
   skills?: string[];
   rating?: number;
@@ -135,7 +138,8 @@ export interface Announcement {
   title: string;
   content: string;
   type: 'info' | 'warning' | 'urgent';
-  admin_id: number;
+  admin_id?: number;
   is_active: boolean;
   created_at: string;
+  expires_at?: string;
 }

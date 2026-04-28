@@ -151,7 +151,7 @@ export default function DashboardSidebar() {
         </div>
       )}
 
-      <nav className={`${isSidebarCollapsed ? "p-3" : "p-4"} flex-1 space-y-2 overflow-y-auto`}>
+      <nav className={`${isSidebarCollapsed ? "p-3" : "p-4"} sidebar-scroll flex-1 space-y-2 overflow-y-auto`}>
         {navItems.map((item) => {
           const isActive = 
             (location.pathname + location.hash === item.to) || 

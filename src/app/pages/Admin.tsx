@@ -20,9 +20,29 @@ import AnnouncementManager from "../components/admin/AnnouncementManager";
 
 import DashboardSidebar from "../components/DashboardSidebar";
 import { useTranslation } from "../hooks/useTranslation";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../components/ui/select";
+import {
+  announcementDurations,
+  formatAnnouncementTimeRemaining,
+  getStoredAnnouncements,
+  pruneExpiredAnnouncements,
+  saveAnnouncements,
+} from "../utils/announcements";
+import { Announcement } from "../types/api";
 
 export default function Admin() {
   const { t } = useTranslation();
+  const getDefaultCustomExpiry = () => {
+    const date = new Date(Date.now() + 60 * 60 * 1000);
+    const timezoneOffset = date.getTimezoneOffset() * 60000;
+    return new Date(date.getTime() - timezoneOffset).toISOString().slice(0, 16);
+  };
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -181,26 +201,63 @@ export default function Admin() {
     }
   };
 
-  const [announcements, setAnnouncements] = useState<any[]>([]);
-  const [newAnnouncement, setNewAnnouncement] = useState({ title: "", content: "", type: "info" });
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [newAnnouncement, setNewAnnouncement] = useState({
+    title: "",
+    content: "",
+    type: "info",
+    durationSeconds: "86400",
+    customExpiresAt: getDefaultCustomExpiry(),
+  });
 
   useEffect(() => {
-    const saved = JSON.parse(localStorage.getItem('announcements') || '[]');
-    setAnnouncements(saved);
+    const syncAnnouncements = () => {
+      setAnnouncements(getStoredAnnouncements());
+    };
+
+    syncAnnouncements();
+    const interval = window.setInterval(() => {
+      setAnnouncements((current) => pruneExpiredAnnouncements(current));
+    }, 1000);
+
+    window.addEventListener('storage', syncAnnouncements);
+
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener('storage', syncAnnouncements);
+    };
   }, []);
 
   const handlePostAnnouncement = () => {
     if (!newAnnouncement.title || !newAnnouncement.content) return;
-    const announcement = {
-      ...newAnnouncement,
+    const expiresAt =
+      newAnnouncement.durationSeconds === "custom"
+        ? new Date(newAnnouncement.customExpiresAt).toISOString()
+        : new Date(Date.now() + Number(newAnnouncement.durationSeconds) * 1000).toISOString();
+
+    if (new Date(expiresAt).getTime() <= Date.now()) {
+      toast.error("Choose a future expiration time.");
+      return;
+    }
+
+    const announcement: Announcement = {
+      title: newAnnouncement.title,
+      content: newAnnouncement.content,
+      type: newAnnouncement.type as Announcement["type"],
       id: Date.now(),
       created_at: new Date().toISOString(),
-      is_active: true
+      expires_at: expiresAt,
+      is_active: true,
     };
     const updated = [announcement, ...announcements];
-    setAnnouncements(updated);
-    localStorage.setItem('announcements', JSON.stringify(updated));
-    setNewAnnouncement({ title: "", content: "", type: "info" });
+    setAnnouncements(saveAnnouncements(updated));
+    setNewAnnouncement({
+      title: "",
+      content: "",
+      type: "info",
+      durationSeconds: "86400",
+      customExpiresAt: getDefaultCustomExpiry(),
+    });
     toast.success("Announcement broadcasted!");
   };
 
@@ -544,6 +601,34 @@ export default function Admin() {
                             ))}
                           </div>
                         </div>
+                        <div>
+                          <label className="text-sm font-medium mb-2 block">Expires After</label>
+                          <Select
+                            value={newAnnouncement.durationSeconds}
+                            onValueChange={(value) => setNewAnnouncement({...newAnnouncement, durationSeconds: value})}
+                          >
+                            <SelectTrigger className="w-full rounded-xl border border-border bg-input px-4 py-2.5 text-sm">
+                              <SelectValue placeholder="Select duration" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {announcementDurations.map((option) => (
+                                <SelectItem key={option.value} value={option.value}>
+                                  {option.label}
+                                </SelectItem>
+                              ))}
+                              <SelectItem value="custom">Custom</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          {newAnnouncement.durationSeconds === "custom" && (
+                            <input
+                              type="datetime-local"
+                              value={newAnnouncement.customExpiresAt}
+                              min={new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16)}
+                              onChange={(e) => setNewAnnouncement({...newAnnouncement, customExpiresAt: e.target.value})}
+                              className="mt-3 w-full px-4 py-2.5 rounded-xl bg-input border border-border focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm"
+                            />
+                          )}
+                        </div>
                         <button 
                           onClick={handlePostAnnouncement}
                           disabled={!newAnnouncement.title || !newAnnouncement.content}
@@ -566,19 +651,18 @@ export default function Admin() {
                               ann.type === 'info' ? 'bg-blue-500/5 border-blue-500/20' : ann.type === 'warning' ? 'bg-amber-500/5 border-amber-500/20' : 'bg-red-500/5 border-red-500/20'
                             }`}>
                               <div className="flex items-center gap-4">
-                                <div className={`w-2 h-2 rounded-full animate-pulse ${
-                                  ann.type === 'info' ? 'bg-blue-500' : ann.type === 'warning' ? 'bg-amber-500' : 'bg-red-500'
-                                }`} />
                                 <div>
                                   <h4 className="font-bold text-sm">{ann.title}</h4>
                                   <p className="text-xs text-foreground/60">{ann.content}</p>
+                                  <p className="text-[11px] text-foreground/40 mt-1">
+                                    Expires in {formatAnnouncementTimeRemaining(ann.expires_at)}
+                                  </p>
                                 </div>
                               </div>
                               <button 
                                 onClick={() => {
                                   const filtered = announcements.filter(a => a.id !== ann.id);
-                                  setAnnouncements(filtered);
-                                  localStorage.setItem('announcements', JSON.stringify(filtered));
+                                  setAnnouncements(saveAnnouncements(filtered));
                                   toast.success("Announcement removed.");
                                 }}
                                 className="p-2 text-foreground/20 hover:text-red-500 transition-colors"

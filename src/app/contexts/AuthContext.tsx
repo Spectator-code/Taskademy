@@ -28,12 +28,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const storedUser = authService.getStoredUser();
     if (storedUser && authService.isAuthenticated()) {
+      const bootToken = localStorage.getItem('auth_token');
       setUser(storedUser);
       authService.getCurrentUser()
-        .then(setUser)
+        .then((freshUser) => {
+          if (localStorage.getItem('auth_token') === bootToken) {
+            setUser(freshUser);
+          }
+        })
         .catch(() => {
-          setUser(null);
-          authService.logout();
+          if (localStorage.getItem('auth_token') === bootToken) {
+            localStorage.removeItem('auth_token');
+            localStorage.removeItem('user');
+            setUser(null);
+          }
         });
     }
     setLoading(false);

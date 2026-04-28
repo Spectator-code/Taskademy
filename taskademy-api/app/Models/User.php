@@ -22,6 +22,8 @@ class User extends Authenticatable
         'resume_file_path',
         'resume_file_name',
         'resume_manual',
+        'id_document_path',
+        'id_document_name',
         'bio',
         'skills',
         'rating',
@@ -30,7 +32,7 @@ class User extends Authenticatable
 
     protected $hidden = ['password', 'remember_token'];
 
-    protected $appends = ['avatar_url', 'resume_url'];
+    protected $appends = ['avatar_url', 'resume_url', 'id_document_url'];
 
     public function tasksAsClient()
     {
@@ -70,6 +72,13 @@ class User extends Authenticatable
     {
         return $this->resume_file_path
             ? Storage::disk('public')->url($this->resume_file_path)
+            : null;
+    }
+
+    public function getIdDocumentUrlAttribute(): ?string
+    {
+        return $this->id_document_path
+            ? Storage::disk('public')->url($this->id_document_path)
             : null;
     }
 }

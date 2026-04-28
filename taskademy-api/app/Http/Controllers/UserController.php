@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Storage;
 
 class UserController extends Controller
 {
-    public function show($id)
+    public function show(Request $request, $id)
     {
         $user = User::with([
             'tasksAsStudent' => fn ($query) => $query
@@ -17,7 +17,7 @@ class UserController extends Controller
                 ->latest(),
         ])->findOrFail($id);
 
-        return response()->json($this->serializeUser($user));
+        return response()->json($this->serializeUser($user, $request->user()));
     }
 
     public function update(Request $request, $id)
@@ -49,7 +49,7 @@ class UserController extends Controller
 
         $user->update($validated);
 
-        return response()->json($this->serializeUser($user));
+        return response()->json($this->serializeUser($user, $request->user()));
     }
 
     public function uploadAvatar(Request $request)
@@ -69,11 +69,15 @@ class UserController extends Controller
             'avatar' => $path,
         ]);
 
-        return response()->json($this->serializeUser($user->fresh()), 201);
+        return response()->json($this->serializeUser($user->fresh(), $request->user()), 201);
     }
 
     public function uploadResume(Request $request)
     {
+        if (!in_array($request->user()->role, ['student', 'admin'], true)) {
+            return response()->json(['message' => 'Only students and admins can manage resumes.'], 403);
+        }
+
         $validated = $request->validate([
             'resume' => [
                 'required',
@@ -97,18 +101,102 @@ class UserController extends Controller
             'resume_file_name' => $file->getClientOriginalName(),
         ]);
 
-        return response()->json($this->serializeUser($user->fresh()), 201);
+        return response()->json($this->serializeUser($user->fresh(), $request->user()), 201);
     }
 
-    protected function serializeUser(User $user): array
+    public function deleteResume(Request $request)
+    {
+        if (!in_array($request->user()->role, ['student', 'admin'], true)) {
+            return response()->json(['message' => 'Only students and admins can manage resumes.'], 403);
+        }
+
+        $user = $request->user();
+
+        if ($user->resume_file_path) {
+            Storage::disk('public')->delete($user->resume_file_path);
+        }
+
+        $user->update([
+            'resume_file_path' => null,
+            'resume_file_name' => null,
+        ]);
+
+        return response()->json($this->serializeUser($user->fresh(), $request->user()));
+    }
+
+    public function uploadIdDocument(Request $request)
+    {
+        if (!in_array($request->user()->role, ['client', 'admin'], true)) {
+            return response()->json(['message' => 'Only clients and admins can manage identity verification.'], 403);
+        }
+
+        $validated = $request->validate([
+            'id_document' => [
+                'required',
+                'file',
+                'max:10240',
+                'mimes:pdf,jpg,jpeg,png',
+            ],
+        ]);
+
+        $user = $request->user();
+
+        if ($user->id_document_path) {
+            Storage::disk('public')->delete($user->id_document_path);
+        }
+
+        $file = $validated['id_document'];
+        $path = $file->store('identity-documents', 'public');
+
+        $user->update([
+            'id_document_path' => $path,
+            'id_document_name' => $file->getClientOriginalName(),
+        ]);
+
+        return response()->json($this->serializeUser($user->fresh(), $request->user()), 201);
+    }
+
+    public function deleteIdDocument(Request $request)
+    {
+        if (!in_array($request->user()->role, ['client', 'admin'], true)) {
+            return response()->json(['message' => 'Only clients and admins can manage identity verification.'], 403);
+        }
+
+        $user = $request->user();
+
+        if ($user->id_document_path) {
+            Storage::disk('public')->delete($user->id_document_path);
+        }
+
+        $user->update([
+            'id_document_path' => null,
+            'id_document_name' => null,
+        ]);
+
+        return response()->json($this->serializeUser($user->fresh(), $request->user()));
+    }
+
+    protected function serializeUser(User $user, ?User $viewer = null): array
     {
         $data = $user->toArray();
-        $data['avatar_url'] = $user->avatar
-            ? Storage::disk('public')->url($user->avatar)
-            : null;
-        $data['resume_url'] = $user->resume_file_path
-            ? Storage::disk('public')->url($user->resume_file_path)
-            : null;
+        $canViewIdentityDocument = $viewer && ($viewer->id === $user->id || $viewer->role === 'admin');
+
+        $data['avatar_url'] = $user->avatar ? Storage::disk('public')->url($user->avatar) : null;
+        $data['resume_url'] = $user->resume_file_path ? Storage::disk('public')->url($user->resume_file_path) : null;
+        $data['id_document_url'] = $user->id_document_path ? Storage::disk('public')->url($user->id_document_path) : null;
+
+        if ($user->role === 'client') {
+            $data['resume_file_path'] = null;
+            $data['resume_file_name'] = null;
+            $data['resume_manual'] = null;
+            $data['resume_url'] = null;
+        }
+
+        if (!$canViewIdentityDocument) {
+            $data['id_document_path'] = null;
+            $data['id_document_name'] = null;
+            $data['id_document_url'] = null;
+        }
 
         return $data;
     }

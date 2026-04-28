@@ -1,6 +1,6 @@
 import { Link, useParams } from "react-router";
 import { motion } from "motion/react";
-import { ArrowLeft, Star, Mail, MapPin, Calendar, ExternalLink, Upload, FileText, Plus, X, Heart, Trash2 } from "lucide-react";
+import { ArrowLeft, Star, Mail, MapPin, Calendar, ExternalLink, Upload, FileText, Plus, X, Heart, Trash2, Shield } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { userService } from "../services/user.service";
 import { ResumeManual, User as UserType } from "../types/api";
@@ -68,9 +68,10 @@ export default function Profile() {
   const [editBio, setEditBio] = useState("");
   const [editSkills, setEditSkills] = useState("");
 
-  const [activeTab, setActiveTab] = useState<'portfolio' | 'reviews' | 'tasks' | 'resume'>('portfolio');
+  const [activeTab, setActiveTab] = useState<'portfolio' | 'reviews' | 'tasks' | 'resume' | 'verification'>('portfolio');
   const [resumeMode, setResumeMode] = useState<'upload' | 'manual' | null>(null);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [uploadedIdFile, setUploadedIdFile] = useState<File | null>(null);
   const [manualResume, setManualResume] = useState<ResumeManual>(emptyResume);
   const [portfolioProjects, setPortfolioProjects] = useState<any[]>(defaultPortfolioProjects);
   const [isAddingProject, setIsAddingProject] = useState(false);
@@ -113,6 +114,23 @@ export default function Profile() {
       setUploadedFile(file);
     } else if (file) {
       toast.error("Please upload a PDF or DOCX file.");
+    }
+  };
+
+  const handleIdUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const allowedTypes = [
+      'application/pdf',
+      'image/jpeg',
+      'image/png',
+    ];
+
+    if (allowedTypes.includes(file.type)) {
+      setUploadedIdFile(file);
+    } else {
+      toast.error("Please upload a PDF, JPG, or PNG file.");
     }
   };
 
@@ -180,6 +198,10 @@ export default function Profile() {
 
   const canEditProfile = profileUser && (user?.id === profileUser.id || user?.role === "admin");
   const isResumeOwner = profileUser?.id === user?.id;
+  const supportsResume = profileUser?.role === "student" || profileUser?.role === "admin";
+  const supportsIdentityVerification = profileUser?.role === "client";
+  const canManageIdentityVerification = supportsIdentityVerification && profileUser?.id === user?.id;
+  const canViewIdentityVerification = supportsIdentityVerification && (profileUser?.id === user?.id || user?.role === "admin");
   const hasUploadedResume = Boolean(profileUser?.resume_file_name && profileUser?.resume_url);
   const hasManualResume = Boolean(
     profileUser?.resume_manual?.summary?.trim() ||
@@ -192,6 +214,7 @@ export default function Profile() {
     profileUser?.resume_manual?.skills?.some((value) => value?.trim())
   );
   const hasAnyResume = hasUploadedResume || hasManualResume;
+  const hasUploadedIdDocument = Boolean(profileUser?.id_document_name && profileUser?.id_document_url);
 
   const handleCancelEdit = () => {
     setEditName(profileUser?.name ?? "");
@@ -274,7 +297,7 @@ export default function Profile() {
   };
 
   const handleSaveUploadedResume = async () => {
-    if (!uploadedFile || !profileUser || !isResumeOwner) return;
+    if (!uploadedFile || !profileUser || !isResumeOwner || !supportsResume) return;
 
     setSavingResume(true);
     try {
@@ -282,6 +305,9 @@ export default function Profile() {
       setProfileUser(updatedUser);
       setUploadedFile(null);
       setResumeMode(null);
+      if (user?.id === updatedUser.id) {
+        await refreshUser();
+      }
       toast.success("Resume uploaded");
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Failed to upload resume.");
@@ -291,7 +317,7 @@ export default function Profile() {
   };
 
   const handleSaveManualResume = async () => {
-    if (!profileUser || !isResumeOwner) return;
+    if (!profileUser || !isResumeOwner || !supportsResume) return;
 
     const cleanedResume: ResumeManual = {
       summary: manualResume.summary.trim(),
@@ -319,6 +345,9 @@ export default function Profile() {
       setProfileUser(updatedUser);
       setManualResume(updatedUser.resume_manual ?? emptyResume());
       setResumeMode(null);
+      if (user?.id === updatedUser.id) {
+        await refreshUser();
+      }
       toast.success("Resume saved");
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Failed to save resume.");
@@ -330,6 +359,64 @@ export default function Profile() {
   const handleEditManualResume = () => {
     setManualResume(profileUser?.resume_manual ?? emptyResume());
     setResumeMode("manual");
+  };
+
+  const handleDeleteUploadedResume = async () => {
+    if (!profileUser || !isResumeOwner || !supportsResume) return;
+
+    setSavingResume(true);
+    try {
+      const updatedUser = await userService.deleteResume();
+      setProfileUser(updatedUser);
+      setUploadedFile(null);
+      setResumeMode(null);
+      if (user?.id === updatedUser.id) {
+        await refreshUser();
+      }
+      toast.success("Uploaded resume removed");
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to remove resume.");
+    } finally {
+      setSavingResume(false);
+    }
+  };
+
+  const handleSaveIdDocument = async () => {
+    if (!uploadedIdFile || !canManageIdentityVerification) return;
+
+    setSavingResume(true);
+    try {
+      const updatedUser = await userService.uploadIdDocument(uploadedIdFile);
+      setProfileUser(updatedUser);
+      setUploadedIdFile(null);
+      if (user?.id === updatedUser.id) {
+        await refreshUser();
+      }
+      toast.success("Identity document uploaded");
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to upload identity document.");
+    } finally {
+      setSavingResume(false);
+    }
+  };
+
+  const handleDeleteIdDocument = async () => {
+    if (!canManageIdentityVerification) return;
+
+    setSavingResume(true);
+    try {
+      const updatedUser = await userService.deleteIdDocument();
+      setProfileUser(updatedUser);
+      setUploadedIdFile(null);
+      if (user?.id === updatedUser.id) {
+        await refreshUser();
+      }
+      toast.success("Identity document removed");
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to remove identity document.");
+    } finally {
+      setSavingResume(false);
+    }
   };
 
   return (
@@ -532,16 +619,30 @@ export default function Profile() {
             >
               Completed Tasks
             </button>
-            <button
-              onClick={() => setActiveTab('resume')}
-              className={`px-6 py-3 border-b-2 transition-colors whitespace-nowrap ${
-                activeTab === 'resume'
-                  ? 'border-primary text-primary'
-                  : 'border-transparent text-foreground/60 hover:text-foreground'
-              }`}
-            >
-              Resume
-            </button>
+            {supportsResume && (
+              <button
+                onClick={() => setActiveTab('resume')}
+                className={`px-6 py-3 border-b-2 transition-colors whitespace-nowrap ${
+                  activeTab === 'resume'
+                    ? 'border-primary text-primary'
+                    : 'border-transparent text-foreground/60 hover:text-foreground'
+                }`}
+              >
+                Resume
+              </button>
+            )}
+            {supportsIdentityVerification && (
+              <button
+                onClick={() => setActiveTab('verification')}
+                className={`px-6 py-3 border-b-2 transition-colors whitespace-nowrap ${
+                  activeTab === 'verification'
+                    ? 'border-primary text-primary'
+                    : 'border-transparent text-foreground/60 hover:text-foreground'
+                }`}
+              >
+                Identity Verification
+              </button>
+            )}
           </div>
         </div>
         {activeTab === 'portfolio' && (
@@ -703,7 +804,7 @@ export default function Profile() {
             </div>
           </motion.div>
         )}
-        {activeTab === 'resume' && (
+        {activeTab === 'resume' && supportsResume && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -1073,6 +1174,13 @@ export default function Profile() {
                       >
                         View File
                       </a>
+                      <button
+                        onClick={handleDeleteUploadedResume}
+                        disabled={savingResume}
+                        className="px-6 py-3 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition-all disabled:opacity-50"
+                      >
+                        Remove File
+                      </button>
                     </div>
                   </div>
                 )}
@@ -1096,6 +1204,116 @@ export default function Profile() {
                     )}
                   </div>
                 )}
+              </div>
+            )}
+          </motion.div>
+        )}
+        {activeTab === 'verification' && supportsIdentityVerification && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            <h2 className="text-2xl font-bold mb-6">Identity Verification</h2>
+
+            {canManageIdentityVerification && (
+              <div className="bg-card rounded-2xl p-8 border border-border mb-6">
+                <div className="flex items-start gap-4 mb-6">
+                  <Shield className="w-10 h-10 text-primary flex-shrink-0" />
+                  <div>
+                    <h3 className="text-xl font-bold mb-2">Upload a valid ID</h3>
+                    <p className="text-foreground/60">
+                      Clients verify their identity with an ID document. Accepted formats: PDF, JPG, PNG.
+                    </p>
+                  </div>
+                </div>
+
+                {!uploadedIdFile && (
+                  <label className="flex flex-col items-center justify-center border-2 border-dashed border-border rounded-2xl p-12 hover:border-primary transition-all cursor-pointer">
+                    <Upload className="w-16 h-16 text-primary mb-4" />
+                    <p className="text-lg font-medium mb-2">Click to upload your ID</p>
+                    <p className="text-sm text-foreground/60 mb-4">PDF, JPG, or PNG (Max 10MB)</p>
+                    <input
+                      type="file"
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      onChange={handleIdUpload}
+                      className="hidden"
+                    />
+                    <button className="px-6 py-3 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all">
+                      Choose File
+                    </button>
+                  </label>
+                )}
+
+                {uploadedIdFile && (
+                  <div className="bg-background/50 rounded-2xl p-6 border border-border">
+                    <div className="flex items-center justify-between gap-4 flex-wrap mb-4">
+                      <div className="flex items-center gap-4">
+                        <FileText className="w-10 h-10 text-primary" />
+                        <div>
+                          <h3 className="text-lg font-bold">{uploadedIdFile.name}</h3>
+                          <p className="text-sm text-foreground/60">
+                            {(uploadedIdFile.size / 1024).toFixed(2)} KB
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => setUploadedIdFile(null)}
+                        className="px-4 py-2 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition-all"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                    <button
+                      onClick={handleSaveIdDocument}
+                      disabled={savingResume}
+                      className="px-6 py-3 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all disabled:opacity-50"
+                    >
+                      Save ID Document
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {hasUploadedIdDocument && (
+              <div className="bg-card rounded-2xl p-8 border border-border">
+                <div className="flex items-center justify-between gap-4 flex-wrap">
+                  <div className="flex items-center gap-4">
+                    <FileText className="w-12 h-12 text-primary" />
+                    <div>
+                      <h3 className="text-xl font-bold">{profileUser?.id_document_name}</h3>
+                      <p className="text-sm text-foreground/60">
+                        {canManageIdentityVerification ? "Your uploaded identity document" : "Client identity document"}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-3 flex-wrap">
+                    <a
+                      href={profileUser?.id_document_url ?? "#"}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="px-6 py-3 rounded-xl bg-background hover:bg-muted transition-all"
+                    >
+                      View File
+                    </a>
+                    {canManageIdentityVerification && (
+                      <button
+                        onClick={handleDeleteIdDocument}
+                        disabled={savingResume}
+                        className="px-6 py-3 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition-all disabled:opacity-50"
+                      >
+                        Remove File
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {!hasUploadedIdDocument && !canManageIdentityVerification && (
+              <div className="bg-card rounded-2xl p-8 border border-border text-foreground/60">
+                Identity documents are private and only visible to the client and admins.
               </div>
             )}
           </motion.div>

@@ -21,7 +21,10 @@ export const authService = {
     email: string;
     password: string;
   }): Promise<AuthResponse> {
-    const response = await apiClient.post<AuthResponse>('/login', data);
+    const response = await apiClient.post<AuthResponse>('/login', {
+      email: data.email.trim(),
+      password: data.password,
+    });
     if (response.data.token) {
       localStorage.setItem('auth_token', response.data.token);
       localStorage.setItem('user', JSON.stringify(response.data.user));
@@ -30,9 +33,14 @@ export const authService = {
   },
 
   async logout(): Promise<void> {
-    await apiClient.post('/logout');
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('user');
+    try {
+      if (localStorage.getItem('auth_token')) {
+        await apiClient.post('/logout');
+      }
+    } finally {
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('user');
+    }
   },
 
   async getCurrentUser(): Promise<User> {

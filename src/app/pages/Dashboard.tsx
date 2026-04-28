@@ -35,6 +35,12 @@ import DashboardSidebar from "../components/DashboardSidebar";
 
 import { useTranslation } from "../hooks/useTranslation";
 import confetti from "canvas-confetti";
+import {
+  formatAnnouncementTimeRemaining,
+  getStoredAnnouncements,
+  pruneExpiredAnnouncements,
+} from "../utils/announcements";
+import { Announcement } from "../types/api";
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -45,16 +51,22 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [completingTaskId, setCompletingTaskId] = useState<number | null>(null);
   const [savedStudents, setSavedStudents] = useState<any[]>([]);
-  const [announcements, setAnnouncements] = useState<any[]>([]);
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
 
   useEffect(() => {
     const handleStorage = () => {
       setSavedStudents(JSON.parse(localStorage.getItem('saved_students') || '[]'));
-      setAnnouncements(JSON.parse(localStorage.getItem('announcements') || '[]'));
+      setAnnouncements(getStoredAnnouncements());
     };
     handleStorage();
+    const interval = window.setInterval(() => {
+      setAnnouncements((current) => pruneExpiredAnnouncements(current));
+    }, 1000);
     window.addEventListener('storage', handleStorage);
-    return () => window.removeEventListener('storage', handleStorage);
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener('storage', handleStorage);
+    };
   }, []);
 
   useEffect(() => {
@@ -200,13 +212,13 @@ export default function Dashboard() {
                       ann.type === 'info' ? 'bg-blue-500/10 border-blue-500/20 text-blue-500' : ann.type === 'warning' ? 'bg-amber-500/10 border-amber-500/20 text-amber-500' : 'bg-red-500/10 border-red-500/20 text-red-500'
                     }`}
                   >
-                    <div className={`w-2 h-2 rounded-full animate-pulse ${
-                      ann.type === 'info' ? 'bg-blue-500' : ann.type === 'warning' ? 'bg-amber-500' : 'bg-red-500'
-                    }`} />
                     <div className="flex-1">
                       <span className="font-bold mr-2 uppercase text-[10px] tracking-widest">{ann.type}:</span>
                       <span className="font-medium">{ann.title}</span>
                       <p className="text-sm opacity-80">{ann.content}</p>
+                      <p className="text-xs opacity-60 mt-1">
+                        Expires in {formatAnnouncementTimeRemaining(ann.expires_at)}
+                      </p>
                     </div>
                   </motion.div>
                 ))}
@@ -283,9 +295,6 @@ export default function Dashboard() {
                 >
                   <div className="flex items-center justify-between mb-4">
                     <stat.icon className={`w-8 h-8 ${stat.color}`} />
-                    <div className={`w-2 h-2 rounded-full animate-pulse ${
-                      user?.role === 'admin' ? 'bg-amber-500' : user?.role === 'client' ? 'bg-blue-500' : 'bg-emerald-500'
-                    }`} />
                   </div>
                   <div className="text-3xl font-bold mb-1 tracking-tight">{stat.value}</div>
                   <div className="text-foreground/60 text-sm font-medium uppercase tracking-wider">{stat.label}</div>

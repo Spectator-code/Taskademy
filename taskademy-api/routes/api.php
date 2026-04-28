@@ -29,6 +29,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/users/{id}', [UserController::class, 'update']);
     Route::post('/users/avatar', [UserController::class, 'uploadAvatar']);
     Route::post('/users/resume', [UserController::class, 'uploadResume']);
+    Route::delete('/users/resume', [UserController::class, 'deleteResume']);
+    Route::post('/users/id-document', [UserController::class, 'uploadIdDocument']);
+    Route::delete('/users/id-document', [UserController::class, 'deleteIdDocument']);
     Route::middleware('admin')->group(function () {
         Route::get('/admin/stats', [AdminController::class, 'stats']);
         Route::get('/admin/registrations', [AdminController::class, 'registrations']);
