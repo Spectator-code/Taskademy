@@ -44,6 +44,9 @@ export default function Register() {
 
   const passwordsMatch = confirmPassword.length > 0 && password === confirmPassword;
   const showMismatch = confirmPassword.length > 0 && password !== confirmPassword;
+  const normalizedEmail = email.trim().toLowerCase();
+  const isStudentEduEmail = normalizedEmail.endsWith(".edu.ph");
+  const showStudentEmailError = role === "student" && email.length > 0 && !isStudentEduEmail;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,6 +56,10 @@ export default function Register() {
     }
     if (!agreeTerms) {
       toast.error("Please agree to the Terms and Conditions");
+      return;
+    }
+    if (role === "student" && !isStudentEduEmail) {
+      toast.error("Student accounts must use a valid .edu.ph email address.");
       return;
     }
 
@@ -176,11 +183,20 @@ export default function Register() {
                   onChange={(e) => setEmail(e.target.value)}
                   onFocus={() => setFocusedField('email')}
                   onBlur={() => setFocusedField(null)}
-                  placeholder="you@example.com"
-                  className="w-full pl-11 pr-4 py-3 rounded-xl bg-input border border-border focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all hover:border-primary/50"
+                  placeholder={role === "student" ? "you@school.edu.ph" : "you@example.com"}
+                  className={`w-full pl-11 pr-4 py-3 rounded-xl bg-input border ${
+                    showStudentEmailError
+                      ? "border-red-500 focus:border-red-500 focus:ring-red-500/20"
+                      : "border-border focus:border-primary focus:ring-primary/20"
+                  } focus:outline-none focus:ring-2 transition-all hover:border-primary/50`}
                   required
                 />
               </div>
+              <p className={`mt-2 text-xs ${showStudentEmailError ? "text-red-500" : "text-foreground/50"}`}>
+                {role === "student"
+                  ? "Student accounts must use a school email ending in .edu.ph."
+                  : "Clients can register with any valid email address."}
+              </p>
             </motion.div>
 
             <motion.div variants={itemVariants}>
