@@ -1,19 +1,40 @@
 import apiClient from '../config/api';
-import { User, AuthResponse } from '../types/api';
+import { User, AuthResponse, RegisterOtpResponse } from '../types/api';
 
 export const authService = {
-  async register(data: {
+  async requestRegisterOtp(data: {
     name: string;
     email: string;
     password: string;
     password_confirmation: string;
     role: 'student' | 'client';
+  }): Promise<RegisterOtpResponse> {
+    const response = await apiClient.post<RegisterOtpResponse>('/register', {
+      ...data,
+      email: data.email.trim(),
+    });
+    return response.data;
+  },
+
+  async verifyRegisterOtp(data: {
+    email: string;
+    otp: string;
   }): Promise<AuthResponse> {
-    const response = await apiClient.post<AuthResponse>('/register', data);
+    const response = await apiClient.post<AuthResponse>('/register/verify-otp', {
+      email: data.email.trim(),
+      otp: data.otp.trim(),
+    });
     if (response.data.token) {
       localStorage.setItem('auth_token', response.data.token);
       localStorage.setItem('user', JSON.stringify(response.data.user));
     }
+    return response.data;
+  },
+
+  async resendRegisterOtp(email: string): Promise<RegisterOtpResponse> {
+    const response = await apiClient.post<RegisterOtpResponse>('/register/resend-otp', {
+      email: email.trim(),
+    });
     return response.data;
   },
 

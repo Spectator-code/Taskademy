@@ -1,6 +1,6 @@
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { motion } from "motion/react";
-import { ArrowLeft, PhilippinePeso, Calendar, Tag, Image as ImageIcon } from "lucide-react";
+import { ArrowLeft, PhilippinePeso, Calendar, Tag, Image as ImageIcon, Users } from "lucide-react";
 import { useState, useEffect } from "react";
 import { taskService } from "../services/task.service";
 import { toast } from "sonner";
@@ -25,7 +25,9 @@ export default function PostTask() {
     requirements: "",
     budget: "",
     deadline: "",
-    category: "Design"
+    category: "Design",
+    isGroupTask: false,
+    requiredStudentsCount: "2",
   });
   const [taskImage, setTaskImage] = useState<File | null>(null);
 
@@ -40,7 +42,9 @@ export default function PostTask() {
             requirements: task.requirements || "",
             budget: String(task.budget),
             deadline: task.deadline.split('T')[0],
-            category: task.category
+            category: task.category,
+            isGroupTask: Boolean(task.is_group_task),
+            requiredStudentsCount: String(task.required_students_count || 2),
           });
         })
         .catch(() => toast.error("Failed to load draft."))
@@ -61,7 +65,9 @@ export default function PostTask() {
         budget: parseFloat(formData.budget) || 0,
         deadline: formData.deadline,
         image: taskImage,
-        status: isDraft ? 'draft' : 'open'
+        status: isDraft ? 'draft' : 'open',
+        is_group_task: formData.isGroupTask,
+        required_students_count: formData.isGroupTask ? parseInt(formData.requiredStudentsCount, 10) || 2 : 1,
       } as any;
 
       const task = draftId 
@@ -82,9 +88,10 @@ export default function PostTask() {
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value, type } = e.target;
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [name]: type === "checkbox" && "checked" in e.target ? e.target.checked : value
     });
   };
 
@@ -182,6 +189,58 @@ export default function PostTask() {
                 className="w-full px-4 py-3 rounded-xl bg-input border border-border focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all resize-none"
                 required
               />
+            </div>
+            <div className="bg-card rounded-2xl p-6 border border-border space-y-4">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <label htmlFor="isGroupTask" className="block font-bold">
+                    <Users className="inline w-4 h-4 mr-2" />
+                    Group Task
+                  </label>
+                  <p className="text-sm text-foreground/60 mt-2">
+                    Enable this when the project is big and you need to hire multiple students.
+                  </p>
+                </div>
+                <label className="inline-flex items-center cursor-pointer">
+                  <input
+                    id="isGroupTask"
+                    name="isGroupTask"
+                    type="checkbox"
+                    checked={formData.isGroupTask}
+                    onChange={handleChange}
+                    className="sr-only peer"
+                  />
+                  <div className="w-12 h-7 bg-muted rounded-full peer peer-checked:bg-primary transition-colors relative">
+                    <div
+                      className={`absolute top-1 left-1 h-5 w-5 rounded-full bg-white transition-transform ${
+                        formData.isGroupTask ? "translate-x-5" : "translate-x-0"
+                      }`}
+                    />
+                  </div>
+                </label>
+              </div>
+
+              {formData.isGroupTask && (
+                <div>
+                  <label htmlFor="requiredStudentsCount" className="block mb-3 font-bold">
+                    Number of Students Needed
+                  </label>
+                  <input
+                    id="requiredStudentsCount"
+                    name="requiredStudentsCount"
+                    type="number"
+                    min="2"
+                    max="20"
+                    value={formData.requiredStudentsCount}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 rounded-xl bg-input border border-border focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                    required={formData.isGroupTask}
+                  />
+                  <p className="text-sm text-foreground/60 mt-2">
+                    A group chat will be created automatically once you start approving students for this task.
+                  </p>
+                </div>
+              )}
             </div>
             <div className="bg-card rounded-2xl p-6 border border-border">
               <label htmlFor="image" className="block mb-3 font-bold">
