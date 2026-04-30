@@ -1,12 +1,13 @@
-import { Link, useParams } from "react-router";
+import { Link, useNavigate, useParams } from "react-router";
 import { motion } from "motion/react";
-import { ArrowLeft, Star, Mail, MapPin, Calendar, ExternalLink, Upload, FileText, Plus, X, Heart, Trash2, Shield } from "lucide-react";
+import { ArrowLeft, Star, Mail, MapPin, Calendar, ExternalLink, Upload, FileText, Plus, X, Trash2, Shield, MessageSquare, Wallet } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { userService } from "../services/user.service";
 import { ResumeManual, User as UserType } from "../types/api";
 import { useAuth } from "../contexts/AuthContext";
 import { toast } from "sonner";
 import { useTranslation } from "../hooks/useTranslation";
+import { messageService } from "../services/message.service";
 
 const defaultPortfolioProjects = [
   {
@@ -58,6 +59,7 @@ export default function Profile() {
   const { t } = useTranslation();
   const params = useParams();
   const { user, refreshUser } = useAuth();
+  const navigate = useNavigate();
   const userId = Number(params.id);
   const [profileUser, setProfileUser] = useState<UserType | null>(null);
   const [loading, setLoading] = useState(true);
@@ -67,6 +69,9 @@ export default function Profile() {
   const [editName, setEditName] = useState("");
   const [editBio, setEditBio] = useState("");
   const [editSkills, setEditSkills] = useState("");
+  const [editGcashName, setEditGcashName] = useState("");
+  const [editGcashNumber, setEditGcashNumber] = useState("");
+  const [showGcashModal, setShowGcashModal] = useState(false);
 
   const [activeTab, setActiveTab] = useState<'portfolio' | 'reviews' | 'tasks' | 'resume' | 'verification'>('portfolio');
   const [resumeMode, setResumeMode] = useState<'upload' | 'manual' | null>(null);
@@ -76,6 +81,8 @@ export default function Profile() {
   const [portfolioProjects, setPortfolioProjects] = useState<any[]>(defaultPortfolioProjects);
   const [isAddingProject, setIsAddingProject] = useState(false);
   const [newProject, setNewProject] = useState({ title: "", description: "", image: "" });
+  const savedStudentsKey = user ? `saved_students_${user.id}` : "saved_students_guest";
+  const [savedStudents, setSavedStudents] = useState<Array<{ id: number; name: string; avatar?: string | null; skills?: string[] }>>([]);
 
   useEffect(() => {
     if (userId) {
@@ -87,6 +94,10 @@ export default function Profile() {
       }
     }
   }, [userId]);
+
+  useEffect(() => {
+    setSavedStudents(JSON.parse(localStorage.getItem(savedStudentsKey) || "[]"));
+  }, [savedStudentsKey]);
 
   const handleAddProject = () => {
     if (!newProject.title || !newProject.description) {
@@ -186,6 +197,8 @@ export default function Profile() {
         setEditName(loadedUser.name ?? "");
         setEditBio(loadedUser.bio ?? "");
         setEditSkills(Array.isArray(loadedUser.skills) ? loadedUser.skills.join(", ") : "");
+        setEditGcashName(loadedUser.gcash_name ?? "");
+        setEditGcashNumber(loadedUser.gcash_number ?? "");
         setManualResume(loadedUser.resume_manual ?? emptyResume());
         setUploadedFile(null);
         setResumeMode(null);
@@ -196,7 +209,8 @@ export default function Profile() {
       .finally(() => setLoading(false));
   }, [userId]);
 
-  const canEditProfile = profileUser && (user?.id === profileUser.id || user?.role === "admin");
+  const canEditProfile = profileUser?.id === user?.id;
+  const canManagePortfolio = profileUser?.id === user?.id;
   const isResumeOwner = profileUser?.id === user?.id;
   const supportsResume = profileUser?.role === "student" || profileUser?.role === "admin";
   const supportsIdentityVerification = profileUser?.role === "client";
@@ -215,11 +229,21 @@ export default function Profile() {
   );
   const hasAnyResume = hasUploadedResume || hasManualResume;
   const hasUploadedIdDocument = Boolean(profileUser?.id_document_name && profileUser?.id_document_url);
+  const canEditOwnGcash = profileUser?.id === user?.id && (profileUser?.role === "student" || profileUser?.role === "admin");
+  const canMessageProfile = !!user && !!profileUser && user.id !== profileUser.id;
+  const canSaveStudent = !!user && !!profileUser && user.id !== profileUser.id && profileUser.role === "student";
+  const canShowGcashDetails = Boolean(profileUser?.can_view_gcash_details && profileUser?.gcash_name && profileUser?.gcash_number);
+  const canPayStudent = Boolean(user?.role === "client" && profileUser?.role === "student" && canShowGcashDetails);
+  const isSavedStudent = canSaveStudent
+    ? savedStudents.some((student) => student.id === profileUser.id)
+    : false;
 
   const handleCancelEdit = () => {
     setEditName(profileUser?.name ?? "");
     setEditBio(profileUser?.bio ?? "");
     setEditSkills(Array.isArray(profileUser?.skills) ? profileUser.skills.join(", ") : "");
+    setEditGcashName(profileUser?.gcash_name ?? "");
+    setEditGcashNumber(profileUser?.gcash_number ?? "");
     setEditing(false);
   };
 
@@ -231,6 +255,12 @@ export default function Profile() {
       const updatedUser = await userService.updateProfile(profileUser.id, {
         name: editName.trim(),
         bio: editBio.trim() || undefined,
+        ...(canEditOwnGcash
+          ? {
+              gcash_name: editGcashName.trim() || null,
+              gcash_number: editGcashNumber.trim() || null,
+            }
+          : {}),
         skills: editSkills
           .split(",")
           .map((skill) => skill.trim())
@@ -419,6 +449,49 @@ export default function Profile() {
     }
   };
 
+  const toggleSavedStudent = () => {
+    if (!profileUser || !canSaveStudent) return;
+
+    const existing = savedStudents.find((student) => student.id === profileUser.id);
+
+    if (existing) {
+      const updatedSavedStudents = savedStudents.filter((student) => student.id !== profileUser.id);
+      localStorage.setItem(
+        savedStudentsKey,
+        JSON.stringify(updatedSavedStudents),
+      );
+      setSavedStudents(updatedSavedStudents);
+      toast.success("Student removed from your list");
+    } else {
+      const updatedSavedStudents = [
+        ...savedStudents,
+        {
+        id: profileUser.id,
+        name: profileUser.name,
+        avatar: profileUser.avatar_url,
+        skills: profileUser.skills,
+      }];
+      localStorage.setItem(savedStudentsKey, JSON.stringify(updatedSavedStudents));
+      setSavedStudents(updatedSavedStudents);
+      toast.success("Student saved to your list!");
+    }
+  };
+
+  const handleMessageProfile = async () => {
+    if (!profileUser) return;
+
+    try {
+      const conversation = await messageService.createConversation(profileUser.id);
+      navigate("/messages", { state: { conversationId: conversation.id } });
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Unable to open conversation.");
+    }
+  };
+
+  useEffect(() => {
+    setShowGcashModal(false);
+  }, [profileUser?.id]);
+
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto px-6 py-8">
@@ -510,27 +583,44 @@ export default function Profile() {
                       </button>
                   )
                 )}
-                {!canEditProfile && user?.role === 'client' && profileUser?.role === 'student' && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const saved = JSON.parse(localStorage.getItem('saved_students') || '[]');
-                      if (saved.find((s: any) => s.id === profileUser.id)) {
-                        const filtered = saved.filter((s: any) => s.id !== profileUser.id);
-                        localStorage.setItem('saved_students', JSON.stringify(filtered));
-                        toast.success("Student removed from your list");
-                      } else {
-                        saved.push({ id: profileUser.id, name: profileUser.name, avatar: profileUser.avatar_url, skills: profileUser.skills });
-                        localStorage.setItem('saved_students', JSON.stringify(saved));
-                        toast.success("Student saved to your list!");
-                      }
-                      window.dispatchEvent(new Event('storage')); // Trigger update
-                    }}
-                    className="px-6 py-3 rounded-xl bg-blue-500/10 text-blue-500 hover:bg-blue-500 hover:text-white transition-all flex items-center gap-2 font-bold"
-                  >
-                    <Heart className="w-5 h-5" />
-                    Save Student
-                  </button>
+                {(canMessageProfile || !canEditProfile) && (
+                  <div className="flex flex-wrap gap-3">
+                    {canSaveStudent && (
+                      <button
+                        type="button"
+                        onClick={toggleSavedStudent}
+                        className={`px-6 py-3 rounded-xl transition-all flex items-center gap-2 font-bold ${
+                          isSavedStudent
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground"
+                        }`}
+                        title={isSavedStudent ? "Remove from saved students" : "Save student"}
+                      >
+                        <Star className={`w-5 h-5 ${isSavedStudent ? "fill-primary-foreground" : "fill-none"}`} />
+                        {isSavedStudent ? "Saved Student" : "Save Student"}
+                      </button>
+                    )}
+                    {canPayStudent && (
+                      <button
+                        type="button"
+                        onClick={() => setShowGcashModal(true)}
+                        className="px-6 py-3 rounded-xl bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white transition-all flex items-center gap-2 font-bold"
+                      >
+                        <Wallet className="w-5 h-5" />
+                        Pay Student
+                      </button>
+                    )}
+                    {canMessageProfile && (
+                      <button
+                        type="button"
+                        onClick={handleMessageProfile}
+                        className="px-6 py-3 rounded-xl bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground transition-all flex items-center gap-2 font-bold"
+                      >
+                        <MessageSquare className="w-5 h-5" />
+                        Message
+                      </button>
+                    )}
+                  </div>
                 )}
               </div>
 
@@ -556,6 +646,28 @@ export default function Profile() {
                     />
                     <p className="text-sm text-foreground/60 mt-2">Separate skills with commas.</p>
                   </div>
+                  {canEditOwnGcash && (
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block mb-2 text-sm font-medium text-foreground/70">GCash Name</label>
+                        <input
+                          value={editGcashName}
+                          onChange={(e) => setEditGcashName(e.target.value)}
+                          className="w-full px-4 py-3 rounded-xl bg-input border border-border focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                          placeholder="Juan Dela Cruz"
+                        />
+                      </div>
+                      <div>
+                        <label className="block mb-2 text-sm font-medium text-foreground/70">GCash Number</label>
+                        <input
+                          value={editGcashNumber}
+                          onChange={(e) => setEditGcashNumber(e.target.value)}
+                          className="w-full px-4 py-3 rounded-xl bg-input border border-border focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                          placeholder="09XXXXXXXXX"
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="flex flex-wrap gap-4 mb-4">
@@ -653,7 +765,7 @@ export default function Profile() {
           >
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold">{t("portfolio") || "Portfolio"}</h2>
-              {canEditProfile && (
+              {canManagePortfolio && (
                 <button 
                   onClick={() => setIsAddingProject(!isAddingProject)}
                   className="px-4 py-2 rounded-xl bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground transition-all flex items-center gap-2 text-sm font-bold"
@@ -730,7 +842,7 @@ export default function Profile() {
                         <ExternalLink className="w-4 h-4" />
                       </a>
                     </div>
-                    {canEditProfile && (
+                    {canManagePortfolio && (
                       <button 
                         onClick={() => handleDeleteProject(project.id)}
                         className="absolute top-4 right-4 p-2 bg-black/50 hover:bg-red-500 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-all backdrop-blur-sm"
@@ -1319,6 +1431,43 @@ export default function Profile() {
           </motion.div>
         )}
       </div>
+
+      {showGcashModal && canPayStudent && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
+          <div className="w-full max-w-lg rounded-3xl border border-emerald-500/20 bg-card p-6 shadow-2xl">
+            <div className="mb-5 flex items-start justify-between gap-4">
+              <div>
+                <div className="mb-2 flex items-center gap-2 text-emerald-500">
+                  <Wallet className="h-5 w-5" />
+                  <h3 className="text-lg font-bold">GCash Details</h3>
+                </div>
+                <p className="text-sm text-foreground/60">
+                  Use these details to send payment to {profileUser?.name}.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowGcashModal(false)}
+                className="rounded-xl p-2 text-foreground/60 transition-colors hover:bg-muted hover:text-foreground"
+                aria-label="Close GCash details"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="grid gap-4 rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-5 text-sm md:grid-cols-2">
+              <div>
+                <div className="mb-1 text-foreground/50">Account Name</div>
+                <div className="font-medium text-foreground">{profileUser?.gcash_name}</div>
+              </div>
+              <div>
+                <div className="mb-1 text-foreground/50">GCash Number</div>
+                <div className="font-medium text-foreground">{profileUser?.gcash_number}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

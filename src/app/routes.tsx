@@ -12,6 +12,8 @@ import Messages from "./pages/Messages";
 import Admin from "./pages/Admin";
 import PostTask from "./pages/PostTask";
 import Settings from "./pages/Settings";
+import SavedStudents from "./pages/SavedStudents";
+import DraftTasks from "./pages/DraftTasks";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import AboutUs from "./pages/AboutUs";
@@ -155,6 +157,22 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute>
             <Settings />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "/saved-students",
+        element: (
+          <ProtectedRoute>
+            <SavedStudents />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "/draft-tasks",
+        element: (
+          <ProtectedRoute allowedRoles={["client", "admin"]}>
+            <DraftTasks />
           </ProtectedRoute>
         ),
       },

@@ -11,9 +11,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Heart,
-  FileEdit,
-  Megaphone,
-  Users
+  FileEdit
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { useApp } from "../contexts/AppContext";
@@ -63,15 +61,19 @@ export default function DashboardSidebar() {
       icon: Settings,
       label: t("settings"),
     },
-    ...(user?.role === "client" || user?.role === "admin"
+    ...(user
       ? [
           {
-            to: "/dashboard#saved-students",
+            to: "/saved-students",
             icon: Heart,
             label: "Saved Students",
           },
+        ]
+      : []),
+    ...(user?.role === "client" || user?.role === "admin"
+      ? [
           {
-            to: "/dashboard#draft-tasks",
+            to: "/draft-tasks",
             icon: FileEdit,
             label: "Draft Tasks",
           },
@@ -79,16 +81,6 @@ export default function DashboardSidebar() {
       : []),
     ...(user?.role === "admin"
       ? [
-          {
-            to: "/admin#user-management",
-            icon: Users,
-            label: "User Management",
-          },
-          {
-            to: "/admin#announcements",
-            icon: Megaphone,
-            label: "Announcements",
-          },
           {
             to: "/admin",
             icon: Star,
