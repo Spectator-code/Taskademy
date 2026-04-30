@@ -1,21 +1,19 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { RegisterOtpResponse, User } from '../types/api';
+import { User } from '../types/api';
 import { authService } from '../services/auth.service';
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  requestRegisterOtp: (data: {
+  register: (data: {
     name: string;
     email: string;
     password: string;
     password_confirmation: string;
     role: 'student' | 'client';
-  }) => Promise<RegisterOtpResponse>;
-  verifyRegisterOtp: (email: string, otp: string) => Promise<void>;
-  resendRegisterOtp: (email: string) => Promise<RegisterOtpResponse>;
+  }) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<User | null>;
   isAuthenticated: boolean;
@@ -54,23 +52,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(response.user);
   };
 
-  const requestRegisterOtp = async (data: {
+  const register = async (data: {
     name: string;
     email: string;
     password: string;
     password_confirmation: string;
     role: 'student' | 'client';
   }) => {
-    return authService.requestRegisterOtp(data);
-  };
-
-  const verifyRegisterOtp = async (email: string, otp: string) => {
-    const response = await authService.verifyRegisterOtp({ email, otp });
+    const response = await authService.register(data);
     setUser(response.user);
-  };
-
-  const resendRegisterOtp = async (email: string) => {
-    return authService.resendRegisterOtp(email);
   };
 
   const logout = async () => {
@@ -95,9 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user,
         loading,
         login,
-        requestRegisterOtp,
-        verifyRegisterOtp,
-        resendRegisterOtp,
+        register,
         logout,
         refreshUser,
         isAuthenticated: !!user,

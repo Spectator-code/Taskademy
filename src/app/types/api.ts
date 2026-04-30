@@ -13,28 +13,15 @@ export interface User {
   id_document_name?: string | null;
   id_document_url?: string | null;
   bio?: string;
-  gcash_name?: string | null;
-  gcash_number?: string | null;
-  can_view_gcash_details?: boolean;
   skills?: string[];
   rating?: number;
   completed_tasks?: number;
   completedTasks?: number;
-  task_earnings?: number;
-  referral_earnings?: number;
   tasksAsStudent?: Task[];
   is_banned?: boolean;
   ban_reason?: string | null;
   created_at: string;
   updated_at: string;
-}
-
-export interface ConversationParticipant {
-  id: number;
-  name: string;
-  email: string;
-  role: 'student' | 'client' | 'admin';
-  avatar_url?: string | null;
 }
 
 export interface ResumeExperience {
@@ -72,20 +59,10 @@ export interface Task {
   moderation_status: 'pending' | 'approved' | 'rejected';
   rejection_reason?: string | null;
   archived_at?: string | null;
-  payment_reference?: string | null;
-  completed_at?: string | null;
-  payment_confirmed_at?: string | null;
-  earnings_released_at?: string | null;
   client_id: number;
   student_id?: number;
-  is_group_task?: boolean;
-  required_students_count?: number;
-  assigned_students_count?: number;
-  open_group_slots?: number;
-  group_conversation_id?: number | null;
   client?: User;
   student?: User;
-  assignees?: User[];
   created_at: string;
   updated_at: string;
 }
@@ -114,12 +91,8 @@ export interface Conversation {
   id: number;
   user1_id: number;
   user2_id: number;
-  is_group?: boolean;
-  title?: string | null;
-  task_id?: number | null;
   user1?: User;
   user2?: User;
-  participants?: ConversationParticipant[];
   last_message?: Message;
   created_at: string;
   updated_at: string;
@@ -150,13 +123,6 @@ export interface RegistrationAnalytics {
 export interface AuthResponse {
   user: User;
   token: string;
-}
-
-export interface RegisterOtpResponse {
-  message: string;
-  email: string;
-  expires_in: number;
-  resend_available_in: number;
 }
 
 export interface PaginatedResponse<T> {
