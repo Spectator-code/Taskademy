@@ -87,7 +87,11 @@ class MessageController extends Controller
 
         $message->load('sender');
 
-        broadcast(new MessageSent($message))->toOthers();
+        try {
+            broadcast(new MessageSent($message))->toOthers();
+        } catch (\Exception $e) {
+            // Silently fail broadcasting if Reverb/Pusher server is down
+        }
 
         return response()->json($message, 201);
     }

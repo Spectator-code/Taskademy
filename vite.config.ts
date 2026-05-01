@@ -3,11 +3,22 @@ import path from 'path'
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 
+/**
+ * 🛠️ VITE CONFIGURATION
+ * --------------------------------------------------------------------------
+ * The build engine and dev server configuration for the React frontend.
+ * Manages plugin integration, path aliasing, and custom asset resolution.
+ */
 
+/**
+ * 🎨 FIGMA ASSET RESOLVER
+ * A custom plugin to handle 'figma:asset/' identifiers.
+ * This maps design-tokens or placeholder assets to actual files in /src/assets.
+ */
 function figmaAssetResolver() {
   return {
     name: 'figma-asset-resolver',
-    resolveId(id) {
+    resolveId(id: string) {
       if (id.startsWith('figma:asset/')) {
         const filename = id.replace('figma:asset/', '')
         return path.resolve(__dirname, 'src/assets', filename)

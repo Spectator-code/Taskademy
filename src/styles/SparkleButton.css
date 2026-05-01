@@ -1,8 +1,16 @@
-/* From Uiverse.io by MuhammadHasann */ 
+/**
+ * ✨ SPARKLE BUTTON COMPONENT
+ * ===========================
+ * A high-fidelity, interactive button used for primary CTAs.
+ * Features: Shimmering borders, animated stars (sparkles), and scale transitions.
+ * Usage: src/app/components/ui/SparkleButton.tsx
+ */
+
 .sparkle-button {
-  --sparkle-primary: 260 97% 61%;
-  --sparkle-secondary: 266 45% 74%;
-  --sparkle-accent: 266 36% 60%;
+  /* Internal theme variables for the button */
+  --sparkle-primary: 152 100% 50%;
+  --sparkle-secondary: 152 100% 74%;
+  --sparkle-accent: 152 100% 40%;
   --black-700: hsla(0 0% 12% / 1);
   --border_radius: 9999px;
   --transtion: 0.3s ease-in-out;
@@ -23,12 +31,14 @@
   text-decoration: none;
 }
 
+/* Red variant for high-alert actions (e.g., Delete Account) */
 .sparkle-button.destructive {
   --sparkle-primary: 0 97% 61%;
   --sparkle-secondary: 0 45% 74%;
   --sparkle-accent: 0 36% 60%;
 }
 
+/* 🧱 LAYER 1: BASE BACKGROUND & SHADOWS */
 .sparkle-button::before {
   content: "";
   position: absolute;
@@ -46,6 +56,7 @@
   z-index: 0;
 }
 
+/* 🌟 LAYER 2: INTERACTIVE GLOW OVERLAY */
 .sparkle-button::after {
   content: "";
   position: absolute;
@@ -76,6 +87,7 @@
   transform: scale(1);
 }
 
+/* ⚡ LAYER 3: ANIMATED DOT BORDER (SPINNING EFFECT) */
 .sparkle-button .dots_border {
   --size_border: calc(100% + 2px);
   overflow: hidden;
@@ -154,6 +166,7 @@
   }
 }
 
+/* 🖋️ LAYER 4: GRADIENT TEXT */
 .sparkle-button .text_button {
   position: relative;
   z-index: 10;

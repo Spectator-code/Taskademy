@@ -7,6 +7,7 @@
     "build": "vite build",
     "dev": "vite"
   },
+  "// UI & Aesthetics": "Radix UI primitives, Lucide icons, and Motion for high-fidelity animations.",
   "dependencies": {
     "react": "18.3.1",
     "react-dom": "18.3.1",
@@ -49,6 +50,7 @@
     "cmdk": "1.1.1",
     "date-fns": "3.6.0",
     "embla-carousel-react": "8.6.0",
+    "// Backend Integration": "Axios for API calls, Laravel Echo/Pusher for real-time messaging.",
     "laravel-echo": "^2.3.4",
     "lucide-react": "0.487.0",
     "motion": "12.23.24",
@@ -70,6 +72,7 @@
     "typeit-react": "^2.7.8",
     "vaul": "1.1.2"
   },
+  "// Build & Dev Tools": "Vite 6 with Tailwind v4 integration.",
   "devDependencies": {
     "@tailwindcss/vite": "4.1.12",
     "@vitejs/plugin-react": "4.7.0",

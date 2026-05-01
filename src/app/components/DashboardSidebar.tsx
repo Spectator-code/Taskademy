@@ -1,4 +1,6 @@
 import { Link, useNavigate, useLocation } from "react-router";
+import { useState } from "react";
+import { motion, AnimatePresence } from "motion/react";
 import {
   LayoutDashboard,
   Search,
@@ -24,6 +26,8 @@ export default function DashboardSidebar() {
   const navigate = useNavigate();
   const logoSrc = theme === "modern" ? "/logo light.png" : "/logo dark.png";
   const location = useLocation();
+
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const handleLogout = async () => {
     await logout();
@@ -92,11 +96,12 @@ export default function DashboardSidebar() {
   ];
 
   return (
-    <aside
-      className={`border-r border-border flex flex-col transition-all duration-300 ease-in-out h-screen sticky top-0 bg-background z-20 ${
-        isSidebarCollapsed ? "w-20" : "w-64"
-      }`}
-    >
+    <>
+      <aside
+        className={`border-r border-border flex flex-col transition-all duration-300 ease-in-out h-screen sticky top-0 bg-background z-20 ${
+          isSidebarCollapsed ? "w-20" : "w-64"
+        }`}
+      >
       <div
         className={`border-b border-border flex items-center ${
           isSidebarCollapsed ? "p-4 justify-center" : "p-6 justify-between gap-3"
@@ -104,13 +109,30 @@ export default function DashboardSidebar() {
       >
         {!isSidebarCollapsed && (
           <Link to="/dashboard" className="text-xl font-bold flex items-center gap-3 min-w-0">
-            <img src={logoSrc} alt="Taskademy Logo" className="h-20 w-auto object-contain flex-shrink-0" />
-            
+            <motion.img 
+              src={logoSrc} 
+              alt="Taskademy Logo" 
+              className="h-20 w-auto object-contain flex-shrink-0" 
+              initial={{ scale: 0.8, opacity: 0, y: -10 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              whileHover={{ scale: 1.05, rotate: 2 }}
+              whileTap={{ scale: 0.95 }}
+              transition={{ type: "spring", stiffness: 400, damping: 15 }}
+            />
           </Link>
         )}
         {isSidebarCollapsed && (
           <Link to="/dashboard" className="flex justify-center">
-            <img src={logoSrc} alt="Taskademy Logo" className="h-11 w-auto object-contain" />
+            <motion.img 
+              src={logoSrc} 
+              alt="Taskademy Logo" 
+              className="h-11 w-auto object-contain" 
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              whileHover={{ scale: 1.1, rotate: 5 }}
+              whileTap={{ scale: 0.9 }}
+              transition={{ type: "spring", stiffness: 400, damping: 15 }}
+            />
           </Link>
         )}
         <button
@@ -219,18 +241,64 @@ export default function DashboardSidebar() {
           >
             <button
               type="button"
-              onClick={handleLogout}
-              className={`flex items-center justify-center rounded-xl text-foreground/40 hover:text-red-500 hover:bg-red-500/10 transition-all ${
+              onClick={() => setShowLogoutConfirm(true)}
+              className={`group flex items-center justify-center rounded-xl text-foreground/40 hover:text-red-500 hover:bg-red-500/10 transition-all overflow-hidden ${
                 isSidebarCollapsed ? "w-10 h-10" : "w-10 h-10"
               }`}
               aria-label={t("logout") || "Logout"}
               title={t("logout") || "Logout"}
             >
-              <LogOut className="w-5 h-5" />
+              <LogOut className="w-5 h-5 group-hover:translate-x-1 group-hover:-translate-y-0.5 transition-transform duration-300" />
             </button>
           </div>
         </div>
       </div>
-    </aside>
+      </aside>
+
+      {/* Logout Confirmation Dialog */}
+      <AnimatePresence>
+        {showLogoutConfirm && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-background/80 backdrop-blur-sm"
+              onClick={() => setShowLogoutConfirm(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-sm bg-card border border-border rounded-2xl shadow-2xl p-6"
+            >
+              <div className="flex items-center gap-4 mb-4 text-red-500">
+                <div className="p-3 bg-red-500/10 rounded-full">
+                  <LogOut className="w-6 h-6" />
+                </div>
+                <h3 className="text-xl font-bold text-foreground">Log Out</h3>
+              </div>
+              <p className="text-foreground/70 mb-6">
+                Are you sure you want to log out of your account? You will need to sign back in to access your dashboard.
+              </p>
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => setShowLogoutConfirm(false)}
+                  className="px-4 py-2 rounded-xl text-sm font-medium hover:bg-muted transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleLogout}
+                  className="px-4 py-2 bg-red-500 text-white rounded-xl text-sm font-medium hover:bg-red-600 transition-colors shadow-lg shadow-red-500/20"
+                >
+                  Yes, Log Out
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+    </>
   );
 }

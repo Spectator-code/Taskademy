@@ -1,4 +1,10 @@
-/* KEEP_IN_SYNC(fullscreen/resources/figmake/shadcn/globals.css) */
+/**
+ * 🧱 DEFAULT SHADCN THEME
+ * --------------------------------------------------------------------------
+ * This file contains the foundational variables for Radix/Shadcn components.
+ * Unlike theme.css (which handles high-fidelity aesthetics), this file
+ * provides the standard fallback styles for basic UI elements.
+ */
 
 :root {
   --font-size: 16px;

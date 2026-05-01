@@ -145,9 +145,33 @@ export default function Safety() {
               </div>
             </div>
             <h1 className="text-4xl md:text-7xl font-bold mb-6 tracking-tight">Trust & Safety</h1>
-            <p className="text-xl text-foreground/70 max-w-2xl leading-relaxed">
+            <p className="text-xl text-foreground/70 max-w-2xl leading-relaxed mb-12">
               Taskademy is built on a foundation of mutual respect and absolute security. These rules ensure a fair marketplace for everyone.
             </p>
+
+            {/* Safety Demo Video */}
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.4, duration: 0.8 }}
+              className="w-full max-w-4xl mx-auto rounded-[2.5rem] overflow-hidden border border-border/50 shadow-2xl relative group bg-black/20 backdrop-blur-sm"
+            >
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              <video 
+                src="/videos/safety_demo.mp4" 
+                autoPlay 
+                muted 
+                loop 
+                playsInline 
+                className="w-full h-full object-cover aspect-video"
+              />
+              <div className="absolute bottom-6 left-8 z-20 flex items-center gap-3 opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 transition-all duration-500">
+                <div className="w-10 h-10 rounded-full bg-primary/20 backdrop-blur-md flex items-center justify-center border border-primary/30">
+                  <Shield className="w-5 h-5 text-primary" />
+                </div>
+                <span className="text-white font-bold text-lg drop-shadow-md">Safety & Trust Walkthrough</span>
+              </div>
+            </motion.div>
           </div>
 
           {/* Zero-Tolerance Box — role="alert" so screen readers announce it */}
@@ -323,9 +347,10 @@ export default function Safety() {
       </main>
 
       {/* Floating Report Button — WCAG 2.4.6 descriptive label */}
-      <div className="fixed bottom-8 right-8 z-50">
+      <div className="fixed bottom-8 right-28 z-50">
         <SparkleButton
           variant="destructive"
+          className="whitespace-nowrap"
           aria-label="Report a platform rule violation"
           onClick={() => alert("Reporting system coming soon!")}
         >

@@ -15,7 +15,7 @@ class DemoUserSeeder extends Seeder
         $password = Hash::make('password123');
 
         $client = User::updateOrCreate(
-            ['email' => 'client@taskademy.test'],
+            ['email' => 'client@gmail.com'],
             [
                 'name' => 'Client Demo',
                 'password' => $password,
@@ -25,7 +25,7 @@ class DemoUserSeeder extends Seeder
         );
 
         $student = User::updateOrCreate(
-            ['email' => 'student@taskademy.test'],
+            ['email' => 'student@gmail.com'],
             [
                 'name' => 'Student Demo',
                 'password' => $password,
@@ -36,7 +36,7 @@ class DemoUserSeeder extends Seeder
         );
 
         User::updateOrCreate(
-            ['email' => 'admin@taskademy.test'],
+            ['email' => 'admin@gmail.com'],
             [
                 'name' => 'Admin Demo',
                 'password' => $password,

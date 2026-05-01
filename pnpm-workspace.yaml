@@ -1,2 +1,4 @@
+# 📦 PNPM WORKSPACE CONFIGURATION
+# Defines the root of the workspace. Currently configured for a single-package setup.
 packages:
   - '.'

@@ -2,8 +2,7 @@ import { createBrowserRouter, Outlet, useLocation } from "react-router";
 import { AnimatePresence } from "motion/react";
 import PageTransition from "./components/ui/PageTransition";
 import Landing from "./pages/Landing";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
+import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import BrowseTasks from "./pages/BrowseTasks";
 import TaskDetails from "./pages/TaskDetails";
@@ -52,11 +51,11 @@ export const router = createBrowserRouter([
       },
       {
         path: "/login",
-        element: <Login />,
+        element: <Auth />,
       },
       {
         path: "/register",
-        element: <Register />,
+        element: <Auth />,
       },
       {
         path: "/privacy",

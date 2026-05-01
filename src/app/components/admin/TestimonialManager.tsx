@@ -1,15 +1,19 @@
 import { useState, useEffect } from "react";
 import { motion } from "motion/react";
-import { Plus, Trash2, Edit2, Save, X } from "lucide-react";
+import { Plus, Trash2, Edit2, Save, X, Star, UploadCloud, Power, User, Quote } from "lucide-react";
 import { toast } from "sonner";
 import { defaultTestimonials } from "../Testimonials";
+import { Badge } from "../ui/badge";
 
 interface Testimonial {
   id: number;
   name: string;
   role: string;
+  company?: string;
   content: string;
   avatar: string;
+  rating?: number;
+  isActive?: boolean;
 }
 
 export default function TestimonialManager() {
@@ -50,8 +54,11 @@ export default function TestimonialManager() {
         id: Date.now(),
         name: editForm.name,
         role: editForm.role,
+        company: editForm.company,
         content: editForm.content,
         avatar: editForm.avatar || `https://i.pravatar.cc/150?u=${editForm.name}`,
+        rating: editForm.rating || 5,
+        isActive: editForm.isActive !== false
       };
       updatedList = [...testimonials, newTestimonial];
       toast.success("Testimonial added successfully!");
@@ -67,6 +74,15 @@ export default function TestimonialManager() {
     setEditingId(null);
     setIsAdding(false);
     setEditForm({});
+  };
+
+  const toggleActive = (id: number) => {
+    const updatedList = testimonials.map(t => 
+      t.id === id ? { ...t, isActive: t.isActive === false ? true : false } as Testimonial : t
+    );
+    setTestimonials(updatedList);
+    saveToStorage(updatedList);
+    toast.success("Testimonial status updated.");
   };
 
   const handleDelete = (id: number) => {
@@ -87,13 +103,33 @@ export default function TestimonialManager() {
   const startAdd = () => {
     setIsAdding(true);
     setEditingId(null);
-    setEditForm({ name: "", role: "", content: "", avatar: "" });
+    setEditForm({ name: "", role: "", company: "", content: "", avatar: "", rating: 5, isActive: true });
   };
 
   const cancelEdit = () => {
     setEditingId(null);
     setIsAdding(false);
     setEditForm({});
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files[0];
+    if (file) handleFileSelected(file);
+  };
+
+  const handleFileSelected = (file: File) => {
+    if (file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = (e) => setEditForm({ ...editForm, avatar: e.target?.result as string });
+      reader.readAsDataURL(file);
+    } else {
+      toast.error("Please upload an image file.");
+    }
   };
 
   return (
@@ -119,104 +155,320 @@ export default function TestimonialManager() {
 
       <div className="space-y-4">
         {isAdding && (
-          <div className="p-4 bg-muted/30 border border-primary/30 rounded-xl space-y-4 relative">
-            <h3 className="font-bold text-primary">Add New Testimonial</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <input 
-                placeholder="Name *" 
-                value={editForm.name || ""} 
-                onChange={(e) => setEditForm({...editForm, name: e.target.value})}
-                className="px-3 py-2 bg-background border border-border rounded-lg text-sm"
-              />
-              <input 
-                placeholder="Role (e.g., Student) *" 
-                value={editForm.role || ""} 
-                onChange={(e) => setEditForm({...editForm, role: e.target.value})}
-                className="px-3 py-2 bg-background border border-border rounded-lg text-sm"
-              />
-              <input 
-                placeholder="Avatar URL (Optional)" 
-                value={editForm.avatar || ""} 
-                onChange={(e) => setEditForm({...editForm, avatar: e.target.value})}
-                className="px-3 py-2 bg-background border border-border rounded-lg text-sm col-span-2"
-              />
-              <textarea 
-                placeholder="Quote Content *" 
-                value={editForm.content || ""} 
-                onChange={(e) => setEditForm({...editForm, content: e.target.value})}
-                className="px-3 py-2 bg-background border border-border rounded-lg text-sm col-span-2 h-24 resize-none"
-              />
-            </div>
-            <div className="flex justify-end gap-3 pt-2">
-              <button onClick={cancelEdit} className="px-4 py-2 rounded-lg hover:bg-muted text-sm font-medium transition-colors">Cancel</button>
-              <button onClick={handleSave} className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 text-sm font-medium transition-colors">
-                <Save className="w-4 h-4" /> Save
-              </button>
-            </div>
-          </div>
-        )}
-
-        {testimonials.map((testimonial) => (
-          <div key={testimonial.id} className="p-4 bg-background/50 border border-border rounded-xl">
-            {editingId === testimonial.id ? (
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+          <div className="p-6 bg-primary/5 border border-primary/20 rounded-[2rem] space-y-6 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl -mr-16 -mt-16" />
+            <div className="relative z-10">
+              <h3 className="font-bold text-primary mb-4 flex items-center gap-2">
+                <Plus className="w-5 h-5" /> Add New Testimonial
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-foreground/40 ml-1">Full Name</label>
                   <input 
                     placeholder="Name *" 
                     value={editForm.name || ""} 
                     onChange={(e) => setEditForm({...editForm, name: e.target.value})}
-                    className="px-3 py-2 bg-background border border-border rounded-lg text-sm"
+                    className="w-full px-4 py-2.5 bg-background/50 border border-border rounded-xl text-sm focus:border-primary/50 outline-none transition-all"
                   />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-foreground/40 ml-1">Role / Position</label>
                   <input 
                     placeholder="Role *" 
                     value={editForm.role || ""} 
                     onChange={(e) => setEditForm({...editForm, role: e.target.value})}
-                    className="px-3 py-2 bg-background border border-border rounded-lg text-sm"
+                    className="w-full px-4 py-2.5 bg-background/50 border border-border rounded-xl text-sm focus:border-primary/50 outline-none transition-all"
                   />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-foreground/40 ml-1">Company / University</label>
                   <input 
-                    placeholder="Avatar URL" 
-                    value={editForm.avatar || ""} 
-                    onChange={(e) => setEditForm({...editForm, avatar: e.target.value})}
-                    className="px-3 py-2 bg-background border border-border rounded-lg text-sm col-span-2"
+                    placeholder="Company / University" 
+                    value={editForm.company || ""} 
+                    onChange={(e) => setEditForm({...editForm, company: e.target.value})}
+                    className="w-full px-4 py-2.5 bg-background/50 border border-border rounded-xl text-sm focus:border-primary/50 outline-none transition-all"
                   />
+                </div>
+                
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-foreground/40 ml-1">Star Rating</label>
+                  <div className="px-4 py-2 bg-background/50 border border-border rounded-xl flex items-center justify-between h-[42px]">
+                    <div className="flex gap-1">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <Star
+                          key={star}
+                          className={`w-4 h-4 cursor-pointer transition-all hover:scale-110 ${(editForm.rating || 5) >= star ? 'text-yellow-400 fill-yellow-400' : 'text-border hover:text-yellow-400/50'}`}
+                          onClick={() => setEditForm({...editForm, rating: star})}
+                        />
+                      ))}
+                    </div>
+                    <span className="text-xs font-bold text-primary">{editForm.rating || 5}.0</span>
+                  </div>
+                </div>
+
+                <div 
+                  className={`md:col-span-2 border-2 border-dashed ${editForm.avatar ? 'border-primary/50 bg-primary/5' : 'border-border/50 hover:border-primary/30 bg-background/30'} rounded-[1.5rem] p-6 flex flex-col items-center justify-center cursor-pointer transition-all relative overflow-hidden group/upload`}
+                  onDragOver={handleDragOver}
+                  onDrop={handleDrop}
+                  onClick={() => document.getElementById('new-testimonial-avatar')?.click()}
+                >
+                  {editForm.avatar ? (
+                    <div className="flex items-center gap-4">
+                      <div className="relative">
+                        <img src={editForm.avatar} alt="Preview" className="w-16 h-16 rounded-full object-cover border-2 border-primary shadow-xl" />
+                        <div className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover/upload:opacity-100 transition-opacity flex items-center justify-center">
+                          <Plus className="w-6 h-6 text-white" />
+                        </div>
+                      </div>
+                      <div className="text-left">
+                        <p className="text-sm font-bold text-primary">Change Avatar</p>
+                        <p className="text-xs text-foreground/40">Drag or click to replace</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center">
+                      <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mb-2 group-hover/upload:scale-110 transition-transform">
+                        <UploadCloud className="w-6 h-6 text-primary" />
+                      </div>
+                      <p className="text-sm font-bold">Upload Avatar</p>
+                      <p className="text-xs text-foreground/40 mt-1">PNG, JPG up to 5MB</p>
+                    </div>
+                  )}
+                  <input 
+                    id="new-testimonial-avatar" 
+                    type="file" 
+                    accept="image/*" 
+                    className="hidden" 
+                    onChange={(e) => e.target.files?.[0] && handleFileSelected(e.target.files[0])}
+                  />
+                </div>
+
+                <div className="md:col-span-2 space-y-1">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-foreground/40 ml-1">Testimonial Quote</label>
                   <textarea 
                     placeholder="Content *" 
                     value={editForm.content || ""} 
                     onChange={(e) => setEditForm({...editForm, content: e.target.value})}
-                    className="px-3 py-2 bg-background border border-border rounded-lg text-sm col-span-2 h-24 resize-none"
+                    className="w-full px-4 py-3 bg-background/50 border border-border rounded-2xl text-sm focus:border-primary/50 outline-none transition-all h-32 resize-none"
                   />
                 </div>
-                <div className="flex justify-end gap-3 pt-2">
-                  <button onClick={cancelEdit} className="px-4 py-2 rounded-lg hover:bg-muted text-sm font-medium transition-colors">Cancel</button>
-                  <button onClick={handleSave} className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 text-sm font-medium transition-colors">
-                    <Save className="w-4 h-4" /> Update
-                  </button>
-                </div>
               </div>
-            ) : (
-              <div className="flex gap-4">
-                <img src={testimonial.avatar || `https://i.pravatar.cc/150?u=${testimonial.name}`} className="w-12 h-12 rounded-full border border-border" alt={testimonial.name} />
-                <div className="flex-1">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <div className="font-bold">{testimonial.name}</div>
-                      <div className="text-primary text-sm font-medium mb-2">{testimonial.role}</div>
+              <div className="flex justify-end gap-3 pt-4">
+                <button onClick={cancelEdit} className="px-6 py-2.5 rounded-xl hover:bg-muted font-bold text-sm transition-all">Cancel</button>
+                <button onClick={handleSave} className="flex items-center gap-2 px-8 py-2.5 bg-primary text-primary-foreground rounded-xl hover:bg-primary/90 font-bold text-sm transition-all shadow-lg shadow-primary/20 hover:-translate-y-0.5 active:translate-y-0">
+                  <Save className="w-4 h-4" /> Save Testimonial
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 gap-4">
+          {testimonials.map((testimonial) => (
+            <motion.div 
+              layout
+              key={testimonial.id} 
+              className={`group relative p-6 rounded-[2rem] border transition-all hover:shadow-2xl hover:shadow-primary/5 ${
+                testimonial.isActive === false 
+                  ? 'bg-red-500/[0.02] border-red-500/10 grayscale-[0.5] opacity-80' 
+                  : 'bg-card/40 backdrop-blur-md border-border/50 hover:border-primary/30'
+              }`}
+            >
+              {editingId === testimonial.id ? (
+                <div className="space-y-6">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                      <Edit2 className="w-4 h-4 text-primary" />
                     </div>
-                    <div className="flex gap-2">
-                      <button onClick={() => startEdit(testimonial)} className="p-2 text-foreground/50 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors" title="Edit">
-                        <Edit2 className="w-4 h-4" />
-                      </button>
-                      <button onClick={() => handleDelete(testimonial.id)} className="p-2 text-foreground/50 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors" title="Delete">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                    <h4 className="font-bold">Editing Testimonial</h4>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold uppercase tracking-wider text-foreground/40 ml-1">Full Name</label>
+                      <input 
+                        placeholder="Name *" 
+                        value={editForm.name || ""} 
+                        onChange={(e) => setEditForm({...editForm, name: e.target.value})}
+                        className="w-full px-4 py-2.5 bg-background/50 border border-border rounded-xl text-sm focus:border-primary/50 outline-none transition-all"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold uppercase tracking-wider text-foreground/40 ml-1">Role / Position</label>
+                      <input 
+                        placeholder="Role *" 
+                        value={editForm.role || ""} 
+                        onChange={(e) => setEditForm({...editForm, role: e.target.value})}
+                        className="w-full px-4 py-2.5 bg-background/50 border border-border rounded-xl text-sm focus:border-primary/50 outline-none transition-all"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold uppercase tracking-wider text-foreground/40 ml-1">Company / University</label>
+                      <input 
+                        placeholder="Company / University" 
+                        value={editForm.company || ""} 
+                        onChange={(e) => setEditForm({...editForm, company: e.target.value})}
+                        className="w-full px-4 py-2.5 bg-background/50 border border-border rounded-xl text-sm focus:border-primary/50 outline-none transition-all"
+                      />
+                    </div>
+                    
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold uppercase tracking-wider text-foreground/40 ml-1">Star Rating</label>
+                      <div className="px-4 py-2 bg-background/50 border border-border rounded-xl flex items-center justify-between h-[42px]">
+                        <div className="flex gap-1">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <Star
+                              key={star}
+                              className={`w-4 h-4 cursor-pointer transition-all hover:scale-110 ${(editForm.rating || 5) >= star ? 'text-yellow-400 fill-yellow-400' : 'text-border hover:text-yellow-400/50'}`}
+                              onClick={() => setEditForm({...editForm, rating: star})}
+                            />
+                          ))}
+                        </div>
+                        <span className="text-xs font-bold text-primary">{editForm.rating || 5}.0</span>
+                      </div>
+                    </div>
+
+                    <div 
+                      className={`md:col-span-2 border-2 border-dashed ${editForm.avatar ? 'border-primary/50 bg-primary/5' : 'border-border/50 hover:border-primary/30 bg-background/30'} rounded-[1.5rem] p-6 flex flex-col items-center justify-center cursor-pointer transition-all relative overflow-hidden group/upload`}
+                      onDragOver={handleDragOver}
+                      onDrop={handleDrop}
+                      onClick={() => document.getElementById(`testimonial-avatar-upload-${testimonial.id}`)?.click()}
+                    >
+                      {editForm.avatar ? (
+                        <div className="flex items-center gap-4">
+                          <div className="relative">
+                            <img src={editForm.avatar} alt="Preview" className="w-16 h-16 rounded-full object-cover border-2 border-primary shadow-xl" />
+                            <div className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover/upload:opacity-100 transition-opacity flex items-center justify-center">
+                              <Plus className="w-6 h-6 text-white" />
+                            </div>
+                          </div>
+                          <div className="text-left">
+                            <p className="text-sm font-bold text-primary">Change Avatar</p>
+                            <p className="text-xs text-foreground/40">Drag or click to replace</p>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center">
+                          <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mb-2 group-hover/upload:scale-110 transition-transform">
+                            <UploadCloud className="w-6 h-6 text-primary" />
+                          </div>
+                          <p className="text-sm font-bold">Upload Avatar</p>
+                          <p className="text-xs text-foreground/40 mt-1">PNG, JPG up to 5MB</p>
+                        </div>
+                      )}
+                      <input 
+                        id={`testimonial-avatar-upload-${testimonial.id}`} 
+                        type="file" 
+                        accept="image/*" 
+                        className="hidden" 
+                        onChange={(e) => e.target.files?.[0] && handleFileSelected(e.target.files[0])}
+                      />
+                    </div>
+
+                    <div className="md:col-span-2 space-y-1">
+                      <label className="text-[10px] font-bold uppercase tracking-wider text-foreground/40 ml-1">Testimonial Quote</label>
+                      <textarea 
+                        placeholder="Content *" 
+                        value={editForm.content || ""} 
+                        onChange={(e) => setEditForm({...editForm, content: e.target.value})}
+                        className="w-full px-4 py-3 bg-background/50 border border-border rounded-2xl text-sm focus:border-primary/50 outline-none transition-all h-32 resize-none"
+                      />
                     </div>
                   </div>
-                  <p className="text-foreground/70 text-sm">"{testimonial.content}"</p>
+                  
+                  <div className="flex justify-end gap-3 pt-2">
+                    <button onClick={cancelEdit} className="px-6 py-2.5 rounded-xl hover:bg-muted font-bold text-sm transition-all">Cancel</button>
+                    <button onClick={handleSave} className="flex items-center gap-2 px-8 py-2.5 bg-primary text-primary-foreground rounded-xl hover:bg-primary/90 font-bold text-sm transition-all shadow-lg shadow-primary/20 hover:-translate-y-0.5 active:translate-y-0">
+                      <Save className="w-4 h-4" /> Save Changes
+                    </button>
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
-        ))}
+              ) : (
+                <div className="flex flex-col md:flex-row gap-6 items-start">
+                  <div className="relative shrink-0">
+                    <div className="w-20 h-20 rounded-[2rem] overflow-hidden border-2 border-border/50 group-hover:border-primary/30 transition-all p-1 bg-background">
+                      <img 
+                        src={testimonial.avatar || `https://i.pravatar.cc/150?u=${testimonial.name}`} 
+                        className="w-full h-full rounded-[1.75rem] object-cover" 
+                        alt={testimonial.name} 
+                      />
+                    </div>
+                    <div className={`absolute -bottom-1 -right-1 w-6 h-6 rounded-lg border-2 border-background flex items-center justify-center ${testimonial.isActive !== false ? 'bg-emerald-500' : 'bg-red-500'}`}>
+                      <Power className="w-3 h-3 text-white" />
+                    </div>
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                      <div>
+                        <div className="flex items-center gap-3 mb-1">
+                          <h4 className="text-xl font-bold tracking-tight group-hover:text-primary transition-colors">{testimonial.name}</h4>
+                          {testimonial.isActive === false && (
+                            <Badge variant="destructive" className="text-[10px] uppercase tracking-widest px-2 h-5">Inactive</Badge>
+                          )}
+                          {testimonial.isActive !== false && (
+                            <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 text-[10px] uppercase tracking-widest px-2 h-5">Active</Badge>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 text-sm font-bold text-primary">
+                          {testimonial.role} 
+                          {testimonial.company && (
+                            <>
+                              <span className="w-1 h-1 rounded-full bg-foreground/20" />
+                              <span className="text-foreground/40">{testimonial.company}</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-1.5 p-1.5 bg-background/30 rounded-2xl border border-border/50">
+                        <button 
+                          onClick={() => toggleActive(testimonial.id)} 
+                          className={`p-2 rounded-xl transition-all ${testimonial.isActive !== false ? 'text-emerald-500 hover:bg-emerald-500/10' : 'text-foreground/20 hover:text-red-500 hover:bg-red-500/10'}`} 
+                          title="Toggle Active"
+                        >
+                          <Power className="w-4 h-4" />
+                        </button>
+                        <div className="w-px h-4 bg-border/50" />
+                        <button 
+                          onClick={() => startEdit(testimonial)} 
+                          className="p-2 text-foreground/20 hover:text-primary hover:bg-primary/10 rounded-xl transition-all" 
+                          title="Edit"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                        <button 
+                          onClick={() => handleDelete(testimonial.id)} 
+                          className="p-2 text-foreground/20 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all" 
+                          title="Delete"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="relative">
+                      <Quote className="absolute -top-2 -left-2 w-8 h-8 text-primary/5 -z-10 group-hover:scale-125 group-hover:text-primary/10 transition-all" />
+                      <p className="text-foreground/70 leading-relaxed italic pr-6 pl-2 border-l-2 border-primary/10 group-hover:border-primary/30 transition-all">
+                        {testimonial.content}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-1 mt-6 p-2 bg-background/20 rounded-xl w-fit">
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <Star 
+                          key={i} 
+                          className={`w-3.5 h-3.5 ${i < (testimonial.rating || 5) ? 'text-yellow-400 fill-yellow-400' : 'text-foreground/10 fill-foreground/5'}`} 
+                        />
+                      ))}
+                      <span className="ml-2 text-[10px] font-black text-foreground/30 uppercase tracking-[0.2em]">Rating Verified</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          ))}
+        </div>
       </div>
     </motion.div>
   );

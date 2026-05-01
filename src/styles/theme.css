@@ -1,5 +1,18 @@
+/**
+ * 🎨 TASKADEMY GLOBAL DESIGN SYSTEM
+ * =================================
+ * This file contains the core visual engine of the platform.
+ * It uses a theme-aware architecture with CSS variables that 
+ * react to the user's selected style (Modern, Minimalist, Classic).
+ */
+
 @custom-variant dark (&:is(.dark *));
 
+/* 
+  🌙 DEFAULT THEME (MODERN/DARK)
+  Used by: src/app/pages/Landing.tsx, src/app/pages/Dashboard.tsx
+  Aesthetics: Deep space indigo, glassmorphism, high-contrast neon green.
+*/
 :root {
   --font-size: 16px;
   --background: #0F0F1A;
@@ -41,12 +54,17 @@
   --sidebar-ring: #00FF88;
 }
 
+/* 
+  ✨ MINIMALIST THEME (LIGHT/MODERN)
+  Usage: Applied via .minimalist class on body or wrapper.
+  Aesthetics: Apple-like cleanliness, high whitespace, subtle shadows.
+*/
 .minimalist {
   --background: #ffffff;
   --foreground: #111111;
-  --primary: #000000;
+  --primary: #00E599; /* Use Taskademy green for better brand recognition in light mode */
   --primary-foreground: #ffffff;
-  --card: #ffffff;
+  --card: #f9f9fb;
   --card-foreground: #111111;
   --secondary: #f4f4f5;
   --secondary-foreground: #111111;
@@ -56,13 +74,21 @@
   --accent-foreground: #111111;
   --border: #e4e4e7;
   --input: #e4e4e7;
-  --ring: #000000;
+  --input-background: #ffffff;
+  --ring: #00E599;
   --sidebar: #ffffff;
   --sidebar-foreground: #111111;
-  --sidebar-primary: #000000;
+  --sidebar-primary: #00E599;
   --sidebar-border: #e4e4e7;
+  --glass-bg: rgba(255, 255, 255, 0.8);
+  --glass-border: rgba(0, 0, 0, 0.1);
 }
 
+/* 
+  📜 CLASSIC THEME (VINTAGE/PREMIUM)
+  Usage: Applied via .classic class.
+  Aesthetics: Solarized-inspired, serif fonts, hard borders, academic feel.
+*/
 .classic {
   --background: #fdf6e3;
   --foreground: #657b83;
@@ -81,8 +107,14 @@
   --sidebar: #073642;
   --sidebar-foreground: #93a1a1;
   --sidebar-primary: #b58900;
+  --radius: 0rem; /* Classic often means sharp corners or very subtle */
 }
 
+/* 
+  🚀 TAILWIND VARIABLE MAPPING
+  Maps the CSS variables above to Tailwind utility classes.
+  Example: bg-primary, text-foreground, border-border.
+*/
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -136,58 +168,173 @@
     -webkit-touch-callout: none;
     -moz-user-select: none;
     -ms-user-select: none;
+    scroll-behavior: smooth;
   }
 
-  
+  /* --- 🪄 10 AESTHETIC UTILITIES --- */
+  /* These classes provide the high-end visual effects seen across the landing page. */
+
+  /* 
+     1. Aura Background
+     Effect: Rotating, blurred radial gradients that create a "cosmic" feel.
+     Usage: <div className="aesthetic-aura"> (Landing.tsx Hero)
+  */
+  .aesthetic-aura {
+    position: relative;
+    overflow: hidden;
+  }
+  .aesthetic-aura::before {
+    content: "";
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle at 50% 50%, var(--primary) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, #00D4FF 0%, transparent 40%),
+                radial-gradient(circle at 20% 80%, #FF00FF 0%, transparent 40%);
+    opacity: 0.15;
+    filter: blur(100px);
+    animation: aura-rotate 20s linear infinite;
+    z-index: -1;
+  }
+  @keyframes aura-rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  /* 
+     2. Minimalist Glass Nav
+     Effect: High-blur pill navigation that stays pinned.
+     Usage: <nav className="aesthetic-glass-nav"> (Landing.tsx Header)
+  */
+  .aesthetic-glass-nav {
+    @apply fixed top-6 left-1/2 -translate-x-1/2 px-8 py-4 rounded-full border backdrop-blur-xl transition-all duration-500 z-[100];
+    background: var(--glass-bg, rgba(15, 15, 26, 0.7));
+    border-color: var(--glass-border, rgba(255, 255, 255, 0.1));
+    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+  }
+
+  /* 
+     3. Classic Card Elevation
+     Effect: Hard-shadow, 2D isometric elevation feel.
+     Usage: <div className="aesthetic-card"> (Landing.tsx Features)
+  */
+  .classic .aesthetic-card {
+    @apply transition-all duration-300 border-b-4 border-r-4 border-primary/20 hover:translate-x-[2px] hover:translate-y-[2px] hover:border-primary/40;
+    box-shadow: 8px 8px 0px rgba(0,0,0,0.05);
+  }
+
+  /* 
+     4. Neon Boundary Pulse
+     Effect: A glowing gradient border that slides around an object.
+     Usage: Add to buttons or feature containers.
+  */
+  .aesthetic-neon-border {
+    position: relative;
+    border-radius: var(--radius);
+  }
+  .aesthetic-neon-border::after {
+    content: "";
+    position: absolute;
+    inset: -2px;
+    background: linear-gradient(90deg, var(--primary), transparent, var(--primary));
+    background-size: 200% 100%;
+    border-radius: inherit;
+    z-index: -1;
+    animation: neon-slide 3s linear infinite;
+    opacity: 0.5;
+  }
+  @keyframes neon-slide {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 200% 50%; }
+  }
+
+  /* 
+     5. Gold Skeleton Shimmer
+     Effect: A smooth sliding light beam across an object.
+     Usage: <div className="aesthetic-shimmer">
+  */
+  .aesthetic-shimmer {
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      var(--muted) 50%,
+      transparent 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite;
+  }
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+
+  /* 
+     6. Landing Page Text Mask
+     Effect: Animated gradient text that shines with brand colors.
+     Usage: <h1 className="aesthetic-text-mask">
+  */
+  .aesthetic-text-mask {
+    background: linear-gradient(
+      to right,
+      var(--foreground) 20%,
+      var(--primary) 40%,
+      var(--primary) 60%,
+      var(--foreground) 80%
+    );
+    background-size: 200% auto;
+    color: var(--foreground);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: text-shine 5s linear infinite;
+  }
+  @keyframes text-shine {
+    to { background-position: 200% center; }
+  }
+
+  /* 
+     7. Classic Serif Typography
+     Usage: Automatically applied when .classic class is active.
+  */
+  .classic h1, .classic h2, .classic h3 {
+    @apply tracking-tight italic font-serif;
+  }
+
+  /* 
+     8. Floating Object
+     Effect: Soft vertical hover animation.
+     Usage: <div className="aesthetic-float">
+  */
+  .aesthetic-float {
+    animation: float 6s ease-in-out infinite;
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-20px); }
+  }
+
+  /* 
+     9. Interactive Scale
+     Effect: Subtle compression on click for tactile feedback.
+     Usage: Active on all classic buttons.
+  */
+  .classic button:hover {
+    @apply scale-[0.98] transition-transform duration-200;
+  }
+
+  /* 
+     10. Section Blur Fade
+     Effect: Deep blur background mask for layered depth.
+     Usage: <section className="aesthetic-section-blur">
+  */
+  .aesthetic-section-blur {
+    @apply relative after:absolute after:inset-0 after:bg-background/20 after:backdrop-blur-3xl after:-z-10;
+  }
 
   html {
     font-size: var(--font-size);
-  }
-
-  .classic {
-    font-family: "Georgia", serif;
-  }
-
-  h1 {
-    font-size: var(--text-2xl);
-    font-weight: var(--font-weight-medium);
-    line-height: 1.5;
-  }
-
-  h2 {
-    font-size: var(--text-xl);
-    font-weight: var(--font-weight-medium);
-    line-height: 1.5;
-  }
-
-  h3 {
-    font-size: var(--text-lg);
-    font-weight: var(--font-weight-medium);
-    line-height: 1.5;
-  }
-
-  h4 {
-    font-size: var(--text-base);
-    font-weight: var(--font-weight-medium);
-    line-height: 1.5;
-  }
-
-  label {
-    font-size: var(--text-base);
-    font-weight: var(--font-weight-medium);
-    line-height: 1.5;
-  }
-
-  button {
-    font-size: var(--text-base);
-    font-weight: var(--font-weight-medium);
-    line-height: 1.5;
-  }
-
-  input {
-    font-size: var(--text-base);
-    font-weight: var(--font-weight-normal);
-    line-height: 1.5;
   }
 
   * {

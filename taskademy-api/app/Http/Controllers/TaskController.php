@@ -495,4 +495,17 @@ class TaskController extends Controller
             return $freshTask->fresh()->load($this->taskRelations());
         });
     }
+
+    public function publicStats()
+    {
+        $activeStudentsCount = User::where('role', 'student')->count();
+        $completedTasksCount = Task::where('status', 'completed')->count();
+        
+        // Mock average rating as 4.9 since there's no rating table yet
+        return response()->json([
+            'active_students' => $activeStudentsCount,
+            'completed_tasks' => $completedTasksCount,
+            'average_rating' => 4.9,
+        ]);
+    }
 }

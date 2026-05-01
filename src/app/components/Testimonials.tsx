@@ -1,6 +1,6 @@
 import { motion } from "motion/react";
 import { useState, useEffect } from "react";
-import { ChevronLeft, ChevronRight, Quote } from "lucide-react";
+import { ChevronLeft, ChevronRight, Quote, Star } from "lucide-react";
 
 export const defaultTestimonials = [
   {
@@ -60,15 +60,17 @@ export default function Testimonials({ isHero = false }: { isHero?: boolean }) {
     return () => window.removeEventListener("storage", handleStorageChange);
   }, []);
 
+  const activeTestimonials = testimonials.filter((t: any) => t.isActive !== false);
+
   const next = () => {
     setCurrentIndex((prevIndex) => 
-      prevIndex === testimonials.length - 1 ? 0 : prevIndex + 1
+      prevIndex === activeTestimonials.length - 1 ? 0 : prevIndex + 1
     );
   };
 
   const prev = () => {
     setCurrentIndex((prevIndex) => 
-      prevIndex === 0 ? testimonials.length - 1 : prevIndex - 1
+      prevIndex === 0 ? activeTestimonials.length - 1 : prevIndex - 1
     );
   };
 
@@ -78,9 +80,9 @@ export default function Testimonials({ isHero = false }: { isHero?: boolean }) {
       next();
     }, 5000);
     return () => clearInterval(timer);
-  }, [testimonials.length]);
+  }, [activeTestimonials.length]);
 
-  if (testimonials.length === 0) return null;
+  if (activeTestimonials.length === 0) return null;
 
   return (
     <div className={`${isHero ? 'p-0 bg-transparent' : 'py-24 bg-card/30'} relative overflow-hidden`}>
@@ -126,9 +128,17 @@ export default function Testimonials({ isHero = false }: { isHero?: boolean }) {
               animate={{ x: `-${currentIndex * 100}%` }}
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
             >
-              {testimonials.map((testimonial) => (
+              {activeTestimonials.map((testimonial: any) => (
                 <div key={testimonial.id} className={`w-full shrink-0 ${isHero ? 'p-6' : 'p-8 md:p-16'} flex flex-col items-center text-center`}>
                   <Quote className={`${isHero ? 'w-8 h-8 mb-4' : 'w-12 h-12 mb-6'} text-primary/20`} />
+                  
+                  {/* Rating Stars */}
+                  <div className="flex gap-1 mb-4">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Star key={i} className={`w-4 h-4 ${i < (testimonial.rating || 5) ? 'text-yellow-400 fill-yellow-400' : 'text-border fill-border'}`} />
+                    ))}
+                  </div>
+
                   <p className={`${isHero ? 'text-base mb-6' : 'text-xl md:text-2xl mb-8'} font-medium leading-relaxed text-foreground/80`}>
                     "{testimonial.content}"
                   </p>
@@ -136,7 +146,9 @@ export default function Testimonials({ isHero = false }: { isHero?: boolean }) {
                     <img src={testimonial.avatar || `https://i.pravatar.cc/150?u=${testimonial.name}`} alt={testimonial.name} className={`${isHero ? 'w-10 h-10' : 'w-14 h-14'} rounded-full border-2 border-primary/20`} />
                     <div className="text-left">
                       <div className={`font-bold ${isHero ? 'text-sm' : 'text-lg'}`}>{testimonial.name}</div>
-                      <div className="text-primary text-xs font-medium">{testimonial.role}</div>
+                      <div className="text-primary text-xs font-medium">
+                        {testimonial.role} {testimonial.company && <span className="text-foreground/60">@ {testimonial.company}</span>}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -146,7 +158,7 @@ export default function Testimonials({ isHero = false }: { isHero?: boolean }) {
 
           {/* Dots */}
           <div className="flex justify-center gap-2 mt-6 flex-wrap">
-            {testimonials.map((_, index) => (
+            {activeTestimonials.map((_, index) => (
               <button
                 key={index}
                 onClick={() => setCurrentIndex(index)}
