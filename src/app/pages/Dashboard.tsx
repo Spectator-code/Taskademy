@@ -16,9 +16,6 @@ import {
   ClipboardCheck,
   ArrowRight,
   LogOut,
-  Heart,
-  X,
-  UserCircle,
   PanelLeftClose,
   PanelLeftOpen,
 } from "lucide-react";
@@ -27,7 +24,6 @@ import { useAuth } from "../contexts/AuthContext";
 import { taskService } from "../services/task.service";
 import { Task } from "../types/api";
 import { toast } from "sonner";
-import ThemeSwitcher from "../components/ui/ThemeSwitcher";
 import { useApp } from "../contexts/AppContext";
 import { formatPeso } from "../utils/currency";
 
@@ -50,12 +46,10 @@ export default function Dashboard() {
   const [assignedTasks, setAssignedTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [completingTaskId, setCompletingTaskId] = useState<number | null>(null);
-  const [savedStudents, setSavedStudents] = useState<any[]>([]);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
 
   useEffect(() => {
     const handleStorage = () => {
-      setSavedStudents(JSON.parse(localStorage.getItem('saved_students') || '[]'));
       setAnnouncements(getStoredAnnouncements());
     };
     handleStorage();
@@ -68,18 +62,6 @@ export default function Dashboard() {
       window.removeEventListener('storage', handleStorage);
     };
   }, []);
-
-  useEffect(() => {
-    if (window.location.hash) {
-      const id = window.location.hash.replace('#', '');
-      const element = document.getElementById(id);
-      if (element) {
-        setTimeout(() => {
-          element.scrollIntoView({ behavior: 'smooth' });
-        }, 100);
-      }
-    }
-  }, [window.location.hash]);
 
   useEffect(() => {
     let ignore = false;
@@ -134,10 +116,61 @@ export default function Dashboard() {
   const totalEarnings = useMemo(
     () =>
       assignedTasks
-        .filter((task) => task.status === "completed")
+        .filter((task) => !!task.earnings_released_at)
         .reduce((sum, task) => sum + Number(task.budget), 0),
     [assignedTasks]
   );
+
+  const postedTasksCount = useMemo(
+    () => postedTasks.length,
+    [postedTasks]
+  );
+
+  const dashboardStats = useMemo(() => {
+    if (user?.role === "client") {
+      return [
+        {
+          icon: Clock,
+          label: "Posted Tasks",
+          value: String(postedTasksCount),
+          color: "text-blue-400",
+        },
+        {
+          icon: Star,
+          label: t("rating"),
+          value: String(user?.rating ?? "0.00"),
+          color: "text-primary",
+        },
+      ];
+    }
+
+    return [
+      {
+        icon: Clock,
+        label: t("activeTasks"),
+        value: String(activeTasks),
+        color: "text-blue-400",
+      },
+      {
+        icon: CheckCircle,
+        label: t("completedTasks"),
+        value: String(completedTasks),
+        color: "text-primary",
+      },
+      {
+        icon: PhilippinePeso,
+        label: t("totalEarnings"),
+        value: formatPeso(totalEarnings),
+        color: "text-yellow-400",
+      },
+      {
+        icon: Star,
+        label: t("rating"),
+        value: String(user?.rating ?? "0.00"),
+        color: "text-primary",
+      },
+    ];
+  }, [user?.role, user?.rating, postedTasksCount, t, activeTasks, completedTasks, totalEarnings]);
 
   const profileCompletion = useMemo(() => {
     if (!user) return 0;
@@ -153,9 +186,18 @@ export default function Dashboard() {
   }, [user]);
 
   const handleCompleteTask = async (taskId: number) => {
+    const paymentReference = window.prompt(
+      "Enter the GCash reference number if you already got paid. Leave it blank to auto-release earnings after the task deadline.",
+      "",
+    );
+
+    if (paymentReference === null) {
+      return;
+    }
+
     setCompletingTaskId(taskId);
     try {
-      const updatedTask = await taskService.completeTask(taskId);
+      const updatedTask = await taskService.completeTask(taskId, paymentReference);
       setPostedTasks((current) =>
         current.map((task) => (task.id === taskId ? updatedTask : task))
       );
@@ -165,7 +207,11 @@ export default function Dashboard() {
       setTasks((current) =>
         current.map((task) => (task.id === taskId ? updatedTask : task))
       );
-      toast.success("Task marked as completed.");
+      toast.success(
+        paymentReference.trim()
+          ? "Task completed and earnings released."
+          : "Task completed. Earnings will auto-release after the deadline if no payment reference is added.",
+      );
       confetti({
         particleCount: 100,
         spread: 70,
@@ -253,33 +299,8 @@ export default function Dashboard() {
               </motion.div>
             )}
 
-            <div className="grid md:grid-cols-4 gap-6 mb-8">
-              {[
-                {
-                  icon: Clock,
-                  label: t("activeTasks"),
-                  value: String(activeTasks),
-                  color: "text-blue-400",
-                },
-                {
-                  icon: CheckCircle,
-                  label: t("completedTasks"),
-                  value: String(completedTasks),
-                  color: "text-primary",
-                },
-                {
-                  icon: PhilippinePeso,
-                  label: t("totalEarnings"),
-                  value: formatPeso(totalEarnings),
-                  color: "text-yellow-400",
-                },
-                {
-                  icon: Star,
-                  label: t("rating"),
-                  value: String(user?.rating ?? "0.00"),
-                  color: "text-primary",
-                },
-              ].map((stat, index) => (
+            <div className={`grid gap-6 mb-8 ${dashboardStats.length >= 4 ? "md:grid-cols-4" : "md:grid-cols-2"}`}>
+              {dashboardStats.map((stat, index) => (
                 <motion.div
                   key={stat.label}
                   initial={{ opacity: 0, y: 20 }}
@@ -560,103 +581,10 @@ export default function Dashboard() {
                           >
                             View
                           </Link>
-                          {task.status === "in_progress" && task.student_id && (
-                            <button
-                              type="button"
-                              onClick={() => handleCompleteTask(task.id)}
-                              disabled={completingTaskId === task.id}
-                              className="px-4 py-2 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                            >
-                              <ClipboardCheck className="w-4 h-4" />
-                              {completingTaskId === task.id ? "Completing..." : "Mark Completed"}
-                            </button>
-                          )}
                         </div>
                       </div>
                     </div>
                   ))}
-                </div>
-              )}
-
-              {/* Draft Tasks Section */}
-              {postedTasks.some(t => t.status === 'draft') && (
-                <div id="draft-tasks" className="mt-12 scroll-mt-24">
-                  <h3 className="text-xl font-bold mb-6 flex items-center gap-2 text-foreground/60">
-                    <ClipboardCheck className="w-5 h-5" />
-                    {t("draftTasks") || "Draft Tasks"}
-                  </h3>
-                  <div className="grid gap-4 opacity-70 hover:opacity-100 transition-opacity">
-                    {postedTasks.filter(t => t.status === 'draft').map((task) => (
-                      <div key={task.id} className="bg-card/50 rounded-2xl p-6 border border-dashed border-border flex items-center justify-between">
-                        <div>
-                          <h4 className="font-bold text-lg">{task.title}</h4>
-                          <p className="text-sm text-foreground/40 italic">Last saved on {new Date(task.updated_at).toLocaleDateString()}</p>
-                        </div>
-                        <Link 
-                          to={`/post-task?draft=${task.id}`} 
-                          className="px-4 py-2 rounded-xl bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground transition-all text-sm font-bold"
-                        >
-                          Continue Editing
-                        </Link>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Saved Students Section */}
-              {user?.role === 'client' && (
-                <div id="saved-students" className="mt-12 scroll-mt-24">
-                  <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
-                    <Heart className="w-5 h-5 text-red-500 fill-red-500" />
-                    {t("savedStudents") || "Saved Students"}
-                  </h3>
-                  {savedStudents.length === 0 ? (
-                    <div className="p-8 bg-card rounded-2xl border border-dashed border-border text-center text-foreground/40">
-                      <p>You haven't saved any students yet.</p>
-                      <Link to="/browse" className="text-primary hover:underline text-sm mt-2 inline-block">Browse students</Link>
-                    </div>
-                  ) : (
-                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {savedStudents.map((student) => (
-                        <div key={student.id} className="bg-card rounded-2xl p-6 border border-border group hover:border-blue-500/50 transition-all">
-                          <div className="flex items-center gap-4 mb-4">
-                            {student.avatar ? (
-                              <img src={student.avatar} className="w-12 h-12 rounded-full object-cover" />
-                            ) : (
-                              <div className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500">
-                                <UserCircle className="w-6 h-6" />
-                              </div>
-                            )}
-                            <div>
-                              <h4 className="font-bold group-hover:text-blue-500 transition-colors">{student.name}</h4>
-                              <div className="flex flex-wrap gap-1 mt-1">
-                                {student.skills?.slice(0, 2).map((s: string) => (
-                                  <span key={s} className="text-[10px] bg-muted px-1.5 py-0.5 rounded text-foreground/60">{s}</span>
-                                ))}
-                              </div>
-                            </div>
-                          </div>
-                          <div className="flex gap-2">
-                            <Link to={`/profile/${student.id}`} className="flex-1 py-2 rounded-lg bg-blue-500/10 text-blue-500 text-center text-sm font-bold hover:bg-blue-500 hover:text-white transition-all">
-                              Profile
-                            </Link>
-                            <button 
-                              onClick={() => {
-                                const filtered = savedStudents.filter(s => s.id !== student.id);
-                                localStorage.setItem('saved_students', JSON.stringify(filtered));
-                                setSavedStudents(filtered);
-                                toast.success("Student removed");
-                              }}
-                              className="px-3 py-2 rounded-lg bg-muted text-foreground/40 hover:text-red-500 transition-colors"
-                            >
-                              <X className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
                 </div>
               )}
             </motion.div>

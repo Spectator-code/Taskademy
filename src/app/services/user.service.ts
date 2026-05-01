@@ -59,4 +59,12 @@ export const userService = {
     const response = await apiClient.put<User>(`/users/${id}`, { resume_manual });
     return response.data;
   },
+
+  async updateGcash(id: number, data: {
+    gcash_name?: string | null;
+    gcash_number?: string | null;
+  }): Promise<User> {
+    const response = await apiClient.put<User>(`/users/${id}`, data);
+    return response.data;
+  },
 };

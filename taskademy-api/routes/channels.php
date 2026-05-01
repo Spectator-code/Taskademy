@@ -13,7 +13,10 @@ Broadcast::channel('conversation.{conversationId}', function ($user, int $conver
         ->where(function ($query) use ($user) {
             $query
                 ->where('user1_id', $user->id)
-                ->orWhere('user2_id', $user->id);
+                ->orWhere('user2_id', $user->id)
+                ->orWhereHas('participants', function ($participantQuery) use ($user) {
+                    $participantQuery->where('users.id', $user->id);
+                });
         })
         ->exists();
 });

@@ -19,12 +19,7 @@ class AuthController extends Controller
         ]);
 
         $normalizedEmail = strtolower(trim($validated['email']));
-
-        if ($validated['role'] === 'student' && !str_ends_with($normalizedEmail, '.edu.ph')) {
-            throw ValidationException::withMessages([
-                'email' => ['Student accounts must use a valid .edu.ph email address.'],
-            ]);
-        }
+        $this->ensureStudentEmailIsValid($validated['role'], $normalizedEmail);
 
         $user = User::create([
             'name' => $validated['name'],
@@ -74,5 +69,14 @@ class AuthController extends Controller
     public function user(Request $request)
     {
         return response()->json($request->user());
+    }
+
+    private function ensureStudentEmailIsValid(string $role, string $email): void
+    {
+        if ($role === 'student' && !str_ends_with($email, '.edu.ph')) {
+            throw ValidationException::withMessages([
+                'email' => ['Student accounts must use a valid .edu.ph email address.'],
+            ]);
+        }
     }
 }

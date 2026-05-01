@@ -33,6 +33,9 @@ export const taskService = {
     budget: number;
     deadline: string;
     image?: File | null;
+    status?: 'open' | 'draft';
+    is_group_task?: boolean;
+    required_students_count?: number;
   }): Promise<Task> {
     const formData = new FormData();
     formData.append('title', data.title);
@@ -43,6 +46,15 @@ export const taskService = {
     }
     formData.append('budget', String(data.budget));
     formData.append('deadline', data.deadline);
+    if (data.status) {
+      formData.append('status', data.status);
+    }
+    if (typeof data.is_group_task === 'boolean') {
+      formData.append('is_group_task', data.is_group_task ? '1' : '0');
+    }
+    if (data.required_students_count) {
+      formData.append('required_students_count', String(data.required_students_count));
+    }
     if (data.image) {
       formData.append('image', data.image);
     }
@@ -78,8 +90,10 @@ export const taskService = {
     return response.data;
   },
 
-  async completeTask(taskId: number): Promise<Task> {
-    const response = await apiClient.post<Task>(`/tasks/${taskId}/complete`);
+  async completeTask(taskId: number, payment_reference?: string): Promise<Task> {
+    const response = await apiClient.post<Task>(`/tasks/${taskId}/complete`, {
+      payment_reference: payment_reference?.trim() || undefined,
+    });
     return response.data;
   },
 };

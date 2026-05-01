@@ -1,4 +1,4 @@
-import { Link } from "react-router";
+import { Link, useLocation } from "react-router";
 import { motion } from "motion/react";
 import { ArrowLeft, Loader2, Search, Send, User } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -24,6 +24,7 @@ function formatTime(value?: string) {
 export default function Messages() {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const location = useLocation();
   const [selectedChat, setSelectedChat] = useState<number | null>(null);
   const [messageText, setMessageText] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
@@ -34,16 +35,27 @@ export default function Messages() {
   const [sending, setSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  const getConversationLabel = (conversation: Conversation) => {
+    if (conversation.is_group) {
+      return conversation.title || "Group Conversation";
+    }
+
+    const otherUser =
+      conversation.user1_id === user?.id ? conversation.user2 : conversation.user1;
+
+    return otherUser?.name ?? "Unknown user";
+  };
+
   const selectedConversation = conversations.find((conv) => conv.id === selectedChat);
 
   const filteredConversations = useMemo(() => {
     const query = search.trim().toLowerCase();
 
     return conversations.filter((conversation) => {
-      const otherUser =
-        conversation.user1_id === user?.id ? conversation.user2 : conversation.user1;
+      const participantNames = (conversation.participants ?? []).map((participant) => participant.name).join(" ");
+      const label = getConversationLabel(conversation);
 
-      return otherUser?.name.toLowerCase().includes(query) ?? false;
+      return `${label} ${participantNames}`.toLowerCase().includes(query);
     });
   }, [conversations, search, user?.id]);
 
@@ -51,9 +63,14 @@ export default function Messages() {
     selectedConversation?.user1_id === user?.id
       ? selectedConversation?.user2
       : selectedConversation?.user1;
+  const groupParticipants = (selectedConversation?.participants ?? []).filter((participant) => participant.id !== user?.id);
 
   useEffect(() => {
     let cancelled = false;
+    const requestedConversationId =
+      typeof location.state === "object" && location.state && "conversationId" in location.state
+        ? Number((location.state as { conversationId?: number }).conversationId)
+        : null;
 
     async function loadConversations() {
       try {
@@ -64,7 +81,7 @@ export default function Messages() {
         }
 
         setConversations(data);
-        setSelectedChat((current) => current ?? data[0]?.id ?? null);
+        setSelectedChat((current) => current ?? requestedConversationId ?? data[0]?.id ?? null);
       } catch {
         toast.error("Unable to load conversations");
       } finally {
@@ -79,7 +96,7 @@ export default function Messages() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [location.state]);
 
   useEffect(() => {
     if (!selectedChat) {
@@ -238,6 +255,10 @@ export default function Messages() {
             ) : (
               filteredConversations.map((conv) => {
                 const otherUser = conv.user1_id === user?.id ? conv.user2 : conv.user1;
+                const conversationLabel = getConversationLabel(conv);
+                const conversationSubtitle = conv.is_group
+                  ? `${conv.participants?.length ?? 0} members`
+                  : otherUser?.email ?? "Direct conversation";
 
                 return (
                   <button
@@ -249,7 +270,7 @@ export default function Messages() {
                   >
                     <div className="flex items-start gap-3">
                       <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 overflow-hidden">
-                        {otherUser?.avatar_url ? (
+                        {!conv.is_group && otherUser?.avatar_url ? (
                           <img
                             src={otherUser.avatar_url}
                             alt={otherUser.name ?? "User"}
@@ -261,10 +282,13 @@ export default function Messages() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between mb-1">
-                          <div className="font-medium truncate">{otherUser?.name ?? "Unknown user"}</div>
+                          <div className="font-medium truncate">{conversationLabel}</div>
                           <div className="text-xs text-foreground/60">
                             {formatTime(conv.last_message?.created_at ?? conv.updated_at)}
                           </div>
+                        </div>
+                        <div className="text-xs text-foreground/50 truncate mb-1">
+                          {conversationSubtitle}
                         </div>
                         <div className="text-sm text-foreground/60 truncate">
                           {conv.last_message?.content ?? "No messages yet"}
@@ -286,19 +310,35 @@ export default function Messages() {
         >
           {selectedConversation ? (
             <>
-              <div className="p-6 border-b border-border flex items-center gap-3">
+            <div className="p-6 border-b border-border flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden">
-                  {selectedUser?.avatar_url ? (
+                  {!selectedConversation.is_group && selectedUser?.avatar_url ? (
                     <img src={selectedUser.avatar_url} alt={selectedUser.name ?? "User"} className="w-full h-full object-cover" />
                   ) : (
                     <User className="w-6 h-6 text-primary" />
                   )}
                 </div>
                 <div>
-                  <div className="font-bold">{selectedUser?.name ?? "Unknown user"}</div>
-                  <div className="text-sm text-foreground/60">Conversation</div>
+                  <div className="font-bold">{getConversationLabel(selectedConversation)}</div>
+                  <div className="text-sm text-foreground/60">
+                    {selectedConversation.is_group
+                      ? groupParticipants.length > 0
+                        ? groupParticipants.map((participant) => participant.name).join(", ")
+                        : "Group conversation"
+                      : "Conversation"}
+                  </div>
                 </div>
               </div>
+              {!selectedConversation.is_group && selectedUser?.id && (
+                <Link
+                  to={`/profile/${selectedUser.id}`}
+                  className="shrink-0 rounded-xl border border-border bg-card px-4 py-2 text-sm font-bold text-foreground hover:bg-muted transition-all"
+                >
+                  View Profile
+                </Link>
+              )}
+            </div>
 
               <div className="flex-1 overflow-auto p-6 space-y-4">
                 {loadingMessages ? (

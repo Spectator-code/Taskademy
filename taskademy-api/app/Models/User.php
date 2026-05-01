@@ -25,9 +25,13 @@ class User extends Authenticatable
         'id_document_path',
         'id_document_name',
         'bio',
+        'gcash_name',
+        'gcash_number',
         'skills',
         'rating',
         'completed_tasks',
+        'task_earnings',
+        'referral_earnings',
     ];
 
     protected $hidden = ['password', 'remember_token'];
@@ -44,9 +48,21 @@ class User extends Authenticatable
         return $this->hasMany(Task::class, 'student_id');
     }
 
+    public function groupTasks()
+    {
+        return $this->belongsToMany(Task::class, 'task_assignees')
+            ->withTimestamps();
+    }
+
     public function taskApplications()
     {
         return $this->hasMany(TaskApplication::class, 'applicant_id');
+    }
+
+    public function groupConversations()
+    {
+        return $this->belongsToMany(Conversation::class, 'conversation_participants')
+            ->withTimestamps();
     }
 
     
@@ -56,6 +72,8 @@ class User extends Authenticatable
             'skills' => 'array',
             'resume_manual' => 'array',
             'rating' => 'decimal:2',
+            'task_earnings' => 'decimal:2',
+            'referral_earnings' => 'decimal:2',
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];

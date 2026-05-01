@@ -141,6 +141,11 @@ export default function BrowseTasks() {
                       <span className="px-3 py-1 rounded-full bg-primary/10 text-primary text-sm">
                         {task.category}
                       </span>
+                      {task.is_group_task && (
+                        <span className="px-3 py-1 rounded-full bg-blue-500/10 text-blue-400 text-sm">
+                          Group Task · {task.open_group_slots ?? 0} slots left
+                        </span>
+                      )}
                       <span className="px-3 py-1 rounded-full bg-green-500/10 text-green-400 text-sm capitalize">
                         {task.status.replace("_", " ")}
                       </span>

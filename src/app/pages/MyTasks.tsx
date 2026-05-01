@@ -5,16 +5,15 @@ import {
   Clock,
   CheckCircle,
   Star,
-  PhilippinePeso,
-  ArrowRight,
-  ClipboardCheck,
   Search,
-  Filter,
+  User,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { taskService } from "../services/task.service";
-import { Task } from "../types/api";
+import { Task, TaskApplication } from "../types/api";
 import { toast } from "sonner";
 import DashboardSidebar from "../components/DashboardSidebar";
 import { useTranslation } from "../hooks/useTranslation";
@@ -30,6 +29,10 @@ export default function MyTasks() {
   const [filter, setFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [completingTaskId, setCompletingTaskId] = useState<number | null>(null);
+  const [expandedTaskId, setExpandedTaskId] = useState<number | null>(null);
+  const [taskApplications, setTaskApplications] = useState<Record<number, TaskApplication[]>>({});
+  const [loadingApplicantsTaskId, setLoadingApplicantsTaskId] = useState<number | null>(null);
+  const [acceptingApplicantId, setAcceptingApplicantId] = useState<number | null>(null);
 
   useEffect(() => {
     let ignore = false;
@@ -62,16 +65,29 @@ export default function MyTasks() {
   }, []);
 
   const handleCompleteTask = async (taskId: number) => {
+    const paymentReference = window.prompt(
+      "Enter the GCash reference number if payment already arrived. Leave it blank to release earnings automatically after the task deadline.",
+      "",
+    );
+
+    if (paymentReference === null) {
+      return;
+    }
+
     setCompletingTaskId(taskId);
     try {
-      const updatedTask = await taskService.completeTask(taskId);
+      const updatedTask = await taskService.completeTask(taskId, paymentReference);
       setPostedTasks((current) =>
         current.map((task) => (task.id === taskId ? updatedTask : task))
       );
       setAssignedTasks((current) =>
         current.map((task) => (task.id === taskId ? updatedTask : task))
       );
-      toast.success("Task marked as completed.");
+      toast.success(
+        paymentReference.trim()
+          ? "Task completed and earnings released."
+          : "Task completed. Earnings will auto-release after the deadline if no payment reference is added.",
+      );
       confetti({
         particleCount: 100,
         spread: 70,
@@ -81,6 +97,59 @@ export default function MyTasks() {
       toast.error(error.response?.data?.message || "Failed to complete task.");
     } finally {
       setCompletingTaskId(null);
+    }
+  };
+
+  const canManageApplicants = user?.role === "client" || user?.role === "admin";
+
+  const handleToggleApplicants = async (taskId: number) => {
+    if (expandedTaskId === taskId) {
+      setExpandedTaskId(null);
+      return;
+    }
+
+    setExpandedTaskId(taskId);
+
+    if (taskApplications[taskId]) {
+      return;
+    }
+
+    setLoadingApplicantsTaskId(taskId);
+    try {
+      const applications = await taskService.getTaskApplications(taskId);
+      setTaskApplications((current) => ({
+        ...current,
+        [taskId]: applications,
+      }));
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to load applicants.");
+    } finally {
+      setLoadingApplicantsTaskId((current) => (current === taskId ? null : current));
+    }
+  };
+
+  const handleAcceptApplicant = async (taskId: number, studentId: number) => {
+    setAcceptingApplicantId(studentId);
+    try {
+      const updatedTask = await taskService.acceptApplication(taskId, studentId);
+      setPostedTasks((current) =>
+        current.map((task) => (task.id === taskId ? updatedTask : task))
+      );
+      setAssignedTasks((current) =>
+        current.map((task) => (task.id === taskId ? updatedTask : task))
+      );
+      setTaskApplications((current) => ({
+        ...current,
+        [taskId]: (current[taskId] ?? []).map((application) => ({
+          ...application,
+          status: application.applicant_id === studentId ? "accepted" : "rejected",
+        })),
+      }));
+      toast.success("Applicant accepted.");
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to accept applicant.");
+    } finally {
+      setAcceptingApplicantId(null);
     }
   };
 
@@ -213,11 +282,11 @@ export default function MyTasks() {
                     : `No tasks found with status "${filter.replace('_', ' ')}".`}
                 </p>
                 {user?.role === 'student' ? (
-                  <Link to="/browse" className="px-8 py-3 bg-primary text-white rounded-xl font-bold hover:scale-105 transition-all inline-block">
+                  <Link to="/browse" className="px-8 py-3 bg-primary text-primary-foreground rounded-xl font-bold hover:bg-primary/90 transition-all inline-block">
                     Browse Available Tasks
                   </Link>
                 ) : (
-                  <Link to="/post-task" className="px-8 py-3 bg-primary text-white rounded-xl font-bold hover:scale-105 transition-all inline-block">
+                  <Link to="/post-task" className="px-8 py-3 bg-primary text-primary-foreground rounded-xl font-bold hover:bg-primary/90 transition-all inline-block">
                     Post a New Task
                   </Link>
                 )}
@@ -227,7 +296,6 @@ export default function MyTasks() {
                 {tasksToDisplay.map((task) => (
                   <motion.div
                     key={task.id}
-                    layout
                     initial={{ opacity: 0, scale: 0.98 }}
                     animate={{ opacity: 1, scale: 1 }}
                     className="bg-card rounded-2xl p-6 border border-border hover:border-primary/30 transition-all shadow-sm group"
@@ -247,11 +315,17 @@ export default function MyTasks() {
                           </span>
                         </div>
                         <h3 className="text-xl font-bold mb-2 group-hover:text-primary transition-colors">{task.title}</h3>
-                        <div className="flex items-center gap-6 text-sm text-foreground/60">
+                        <div className="flex items-center gap-6 text-sm text-foreground/60 flex-wrap">
                           <div className="flex items-center gap-2">
                             <Clock className="w-4 h-4" />
                             {new Date(task.deadline).toLocaleDateString()}
                           </div>
+                          {task.is_group_task && (
+                            <div className="flex items-center gap-2">
+                              <span className="w-1 h-1 rounded-full bg-foreground/20" />
+                              Team: <span className="font-bold">{task.assigned_students_count ?? task.assignees?.length ?? 0}/{task.required_students_count ?? 1}</span>
+                            </div>
+                          )}
                           {user?.role === 'student' ? (
                             <div className="flex items-center gap-2">
                               <span className="w-1 h-1 rounded-full bg-foreground/20" />
@@ -260,20 +334,38 @@ export default function MyTasks() {
                           ) : (
                             <div className="flex items-center gap-2">
                               <span className="w-1 h-1 rounded-full bg-foreground/20" />
-                              Assigned to: <span className="font-bold">{task.student?.name || 'Unassigned'}</span>
+                              {task.is_group_task ? (
+                                <>Assigned team: <span className="font-bold">{task.assigned_students_count ?? task.assignees?.length ?? 0} hired</span></>
+                              ) : (
+                                <>Assigned to: <span className="font-bold">{task.student?.name || 'Unassigned'}</span></>
+                              )}
                             </div>
                           )}
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-3 flex-wrap">
+                        {canManageApplicants && (
+                          <button
+                            type="button"
+                            onClick={() => handleToggleApplicants(task.id)}
+                            className="px-6 py-2.5 rounded-xl bg-primary/10 hover:bg-primary/15 text-primary font-bold transition-all inline-flex items-center gap-2"
+                          >
+                            Applicants
+                            {expandedTaskId === task.id ? (
+                              <ChevronUp className="w-4 h-4" />
+                            ) : (
+                              <ChevronDown className="w-4 h-4" />
+                            )}
+                          </button>
+                        )}
                         <Link
                           to={`/task/${task.id}`}
                           className="px-6 py-2.5 rounded-xl bg-muted hover:bg-muted/80 text-foreground font-bold transition-all"
                         >
                           Details
                         </Link>
-                        {task.status === 'in_progress' && (
+                        {user?.role === 'student' && task.status === 'in_progress' && (
                           <button
                             onClick={() => handleCompleteTask(task.id)}
                             disabled={completingTaskId === task.id}
@@ -284,6 +376,104 @@ export default function MyTasks() {
                         )}
                       </div>
                     </div>
+
+                    {canManageApplicants && expandedTaskId === task.id && (
+                      <div className="mt-6 border-t border-border pt-6">
+                        <div className="flex items-center justify-between gap-3 mb-4">
+                          <h4 className="text-lg font-bold">{t("applicants") || "Applicants"}</h4>
+                          <span className="text-sm text-foreground/50">
+                            {task.is_group_task
+                              ? `${task.assigned_students_count ?? task.assignees?.length ?? 0}/${task.required_students_count ?? 1} hired`
+                              : `${(taskApplications[task.id] ?? []).length} total`}
+                          </span>
+                        </div>
+
+                        {loadingApplicantsTaskId === task.id ? (
+                          <div className="text-sm text-foreground/60">Loading applicants...</div>
+                        ) : (taskApplications[task.id] ?? []).length === 0 ? (
+                          <div className="rounded-xl border border-border bg-background/40 p-4 text-sm text-foreground/60">
+                            {t("noApplicantsYet") || "No one has applied yet."}
+                          </div>
+                        ) : (
+                          <div className="space-y-3">
+                            {(taskApplications[task.id] ?? []).map((application) => (
+                              <div
+                                key={application.id}
+                                className="flex flex-col gap-4 rounded-xl border border-border bg-background/40 p-4 md:flex-row md:items-center md:justify-between"
+                              >
+                                <div className="flex items-center gap-3 min-w-0">
+                                  {application.applicant?.avatar_url ? (
+                                    <img
+                                      src={application.applicant.avatar_url}
+                                      alt={application.applicant.name ?? "Applicant"}
+                                      className="h-11 w-11 rounded-full object-cover border border-border"
+                                    />
+                                  ) : (
+                                    <div className="h-11 w-11 rounded-full bg-primary/15 flex items-center justify-center">
+                                      <User className="w-5 h-5 text-primary" />
+                                    </div>
+                                  )}
+                                  <div className="min-w-0">
+                                    <Link
+                                      to={`/profile/${application.applicant_id}`}
+                                      className="block truncate font-bold hover:text-primary transition-colors"
+                                    >
+                                      {application.applicant?.name ?? "Applicant"}
+                                    </Link>
+                                    <p className="text-sm text-foreground/60 truncate">
+                                      {application.applicant?.email ?? "No email available"}
+                                    </p>
+                                  </div>
+                                </div>
+
+                                <div className="flex items-center gap-3 flex-wrap">
+                                  <span
+                                    className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
+                                      application.status === "accepted"
+                                        ? "bg-emerald-500/10 text-emerald-500"
+                                        : application.status === "rejected"
+                                        ? "bg-red-500/10 text-red-500"
+                                        : "bg-amber-500/10 text-amber-500"
+                                    }`}
+                                  >
+                                    {application.status}
+                                  </span>
+                                  <Link
+                                    to={`/profile/${application.applicant_id}`}
+                                    className="px-4 py-2 rounded-xl bg-muted hover:bg-muted/80 text-foreground font-bold transition-all text-sm"
+                                  >
+                                    View Profile
+                                  </Link>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleAcceptApplicant(task.id, application.applicant_id)}
+                                    disabled={
+                                      application.status === "accepted"
+                                      || acceptingApplicantId === application.applicant_id
+                                      || task.status !== "open"
+                                      || (
+                                        Boolean(task.is_group_task)
+                                        && (task.open_group_slots ?? 0) <= 0
+                                      )
+                                    }
+                                    className="px-4 py-2 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm inline-flex items-center gap-2"
+                                  >
+                                    <CheckCircle className="w-4 h-4" />
+                                    {application.status === "accepted"
+                                      ? t("accepted") || "Accepted"
+                                      : acceptingApplicantId === application.applicant_id
+                                      ? t("accepting") || "Accepting..."
+                                      : task.is_group_task
+                                      ? "Hire Student"
+                                      : t("accept") || "Accept"}
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </motion.div>
                 ))}
               </div>

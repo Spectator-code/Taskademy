@@ -14,9 +14,15 @@ class MessageController extends Controller
         $userId = $request->user()->id;
 
         $conversations = Conversation::query()
-            ->where('user1_id', $userId)
-            ->orWhere('user2_id', $userId)
-            ->with(['user1', 'user2', 'lastMessage.sender'])
+            ->where(function ($query) use ($userId) {
+                $query
+                    ->where('user1_id', $userId)
+                    ->orWhere('user2_id', $userId)
+                    ->orWhereHas('participants', function ($participantQuery) use ($userId) {
+                        $participantQuery->where('users.id', $userId);
+                    });
+            })
+            ->with(['user1', 'user2', 'participants', 'task', 'lastMessage.sender'])
             ->latest()
             ->get();
 
@@ -43,15 +49,16 @@ class MessageController extends Controller
             'user2_id' => $user2,
         ]);
 
-        return response()->json($conversation->load(['user1', 'user2', 'lastMessage.sender']), 201);
+        $conversation->participants()->syncWithoutDetaching([$user1, $user2]);
+
+        return response()->json($conversation->load(['user1', 'user2', 'participants', 'task', 'lastMessage.sender']), 201);
     }
 
     public function messages(Request $request, $conversationId)
     {
-        $conversation = Conversation::with(['messages.sender'])->findOrFail($conversationId);
+        $conversation = Conversation::with(['messages.sender', 'participants'])->findOrFail($conversationId);
 
-        $me = $request->user()->id;
-        if (!in_array($me, [$conversation->user1_id, $conversation->user2_id], true)) {
+        if (!$this->userCanAccessConversation($request->user()->id, $conversation)) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
@@ -65,10 +72,10 @@ class MessageController extends Controller
             'content' => 'required|string',
         ]);
 
-        $conversation = Conversation::findOrFail($validated['conversation_id']);
+        $conversation = Conversation::with('participants')->findOrFail($validated['conversation_id']);
 
         $me = $request->user()->id;
-        if (!in_array($me, [$conversation->user1_id, $conversation->user2_id], true)) {
+        if (!$this->userCanAccessConversation($me, $conversation)) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
@@ -84,5 +91,13 @@ class MessageController extends Controller
 
         return response()->json($message, 201);
     }
-}
 
+    protected function userCanAccessConversation(int $userId, Conversation $conversation): bool
+    {
+        if (in_array($userId, [(int) $conversation->user1_id, (int) $conversation->user2_id], true)) {
+            return true;
+        }
+
+        return $conversation->participants->contains('id', $userId);
+    }
+}

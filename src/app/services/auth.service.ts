@@ -9,11 +9,10 @@ export const authService = {
     password_confirmation: string;
     role: 'student' | 'client';
   }): Promise<AuthResponse> {
-    const response = await apiClient.post<AuthResponse>('/register', data);
-    if (response.data.token) {
-      localStorage.setItem('auth_token', response.data.token);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
-    }
+    const response = await apiClient.post<AuthResponse>('/register', {
+      ...data,
+      email: data.email.trim(),
+    });
     return response.data;
   },
 

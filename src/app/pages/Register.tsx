@@ -54,12 +54,12 @@ export default function Register() {
       toast.error("Passwords don't match!");
       return;
     }
-    if (!agreeTerms) {
-      toast.error("Please agree to the Terms and Conditions");
-      return;
-    }
     if (role === "student" && !isStudentEduEmail) {
       toast.error("Student accounts must use a valid .edu.ph email address.");
+      return;
+    }
+    if (!agreeTerms) {
+      toast.error("Please agree to the Terms and Conditions");
       return;
     }
 
@@ -145,249 +145,254 @@ export default function Register() {
             animate="show"
             onSubmit={handleSubmit} 
             className="space-y-6"
+            style={{ colorScheme: "dark" }}
           >
-            <motion.div variants={itemVariants}>
-              <label htmlFor="name" className={`block mb-2 text-sm font-medium transition-colors ${focusedField === 'name' ? 'text-primary' : 'text-foreground/80'}`}>
-                {t("fullName") || "Full Name"}
-              </label>
-              <div className="relative group">
-                <div className={`absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors ${focusedField === 'name' ? 'text-primary' : 'text-foreground/40'}`}>
-                  <User className="w-5 h-5" />
+              <motion.div variants={itemVariants}>
+                <label htmlFor="name" className={`block mb-2 text-sm font-medium transition-colors ${focusedField === 'name' ? 'text-primary' : 'text-foreground/80'}`}>
+                  {t("fullName") || "Full Name"}
+                </label>
+                <div className="relative group">
+                  <div className={`absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors ${focusedField === 'name' ? 'text-primary' : 'text-foreground/40'}`}>
+                    <User className="w-5 h-5" />
+                  </div>
+                  <input
+                    id="name"
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    onFocus={() => setFocusedField('name')}
+                    onBlur={() => setFocusedField(null)}
+                    placeholder="John Doe"
+                    autoComplete="name"
+                    className="w-full pl-11 pr-4 py-3 rounded-xl bg-input text-foreground border border-border focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all hover:border-primary/50"
+                    required
+                  />
                 </div>
-                <input
-                  id="name"
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  onFocus={() => setFocusedField('name')}
-                  onBlur={() => setFocusedField(null)}
-                  placeholder="John Doe"
-                  className="w-full pl-11 pr-4 py-3 rounded-xl bg-input border border-border focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all hover:border-primary/50"
-                  required
-                />
-              </div>
-            </motion.div>
+              </motion.div>
 
-            <motion.div variants={itemVariants}>
-              <label htmlFor="email" className={`block mb-2 text-sm font-medium transition-colors ${focusedField === 'email' ? 'text-primary' : 'text-foreground/80'}`}>
-                {t("email") || "Email"}
-              </label>
-              <div className="relative group">
-                <div className={`absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors ${focusedField === 'email' ? 'text-primary' : 'text-foreground/40'}`}>
-                  <Mail className="w-5 h-5" />
+              <motion.div variants={itemVariants}>
+                <label htmlFor="email" className={`block mb-2 text-sm font-medium transition-colors ${focusedField === 'email' ? 'text-primary' : 'text-foreground/80'}`}>
+                  {t("email") || "Email"}
+                </label>
+                <div className="relative group">
+                  <div className={`absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors ${focusedField === 'email' ? 'text-primary' : 'text-foreground/40'}`}>
+                    <Mail className="w-5 h-5" />
+                  </div>
+                  <input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    onFocus={() => setFocusedField('email')}
+                    onBlur={() => setFocusedField(null)}
+                    placeholder={role === "student" ? "you@school.edu.ph" : "you@example.com"}
+                    autoComplete="email"
+                    className={`w-full pl-11 pr-4 py-3 rounded-xl bg-input border ${
+                      showStudentEmailError
+                        ? "border-red-500 focus:border-red-500 focus:ring-red-500/20"
+                        : "border-border focus:border-primary focus:ring-primary/20"
+                    } text-foreground focus:outline-none focus:ring-2 transition-all hover:border-primary/50`}
+                    required
+                  />
                 </div>
-                <input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  onFocus={() => setFocusedField('email')}
-                  onBlur={() => setFocusedField(null)}
-                  placeholder={role === "student" ? "you@school.edu.ph" : "you@example.com"}
-                  className={`w-full pl-11 pr-4 py-3 rounded-xl bg-input border ${
-                    showStudentEmailError
-                      ? "border-red-500 focus:border-red-500 focus:ring-red-500/20"
-                      : "border-border focus:border-primary focus:ring-primary/20"
-                  } focus:outline-none focus:ring-2 transition-all hover:border-primary/50`}
-                  required
-                />
-              </div>
-              <p className={`mt-2 text-xs ${showStudentEmailError ? "text-red-500" : "text-foreground/50"}`}>
-                {role === "student"
-                  ? "Student accounts must use a school email ending in .edu.ph."
-                  : "Clients can register with any valid email address."}
-              </p>
-            </motion.div>
+                <p className={`mt-2 text-xs ${showStudentEmailError ? "text-red-500" : "text-foreground/50"}`}>
+                  {role === "student"
+                    ? "Student accounts must use a school email ending in .edu.ph."
+                    : "Clients can register with any valid email address."}
+                </p>
+              </motion.div>
 
-            <motion.div variants={itemVariants}>
-              <label htmlFor="password" className={`block mb-2 text-sm font-medium transition-colors ${focusedField === 'password' ? 'text-primary' : 'text-foreground/80'}`}>
-                {t("password") || "Password"}
-              </label>
-              <div className="relative group">
-                <div className={`absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors ${focusedField === 'password' ? 'text-primary' : 'text-foreground/40'}`}>
-                  <Lock className="w-5 h-5" />
-                </div>
-                <input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  onFocus={() => setFocusedField('password')}
-                  onBlur={() => setFocusedField(null)}
-                  placeholder={"\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022"}
-                  className="w-full pl-11 pr-12 py-3 rounded-xl bg-input border border-border focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all hover:border-primary/50"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-foreground/40 hover:text-primary transition-colors focus:outline-none"
-                >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
-              </div>
-              <AnimatePresence>
-                {password && (
-                  <motion.div 
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="mt-2"
+              <motion.div variants={itemVariants}>
+                <label htmlFor="password" className={`block mb-2 text-sm font-medium transition-colors ${focusedField === 'password' ? 'text-primary' : 'text-foreground/80'}`}>
+                  {t("password") || "Password"}
+                </label>
+                <div className="relative group">
+                  <div className={`absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors ${focusedField === 'password' ? 'text-primary' : 'text-foreground/40'}`}>
+                    <Lock className="w-5 h-5" />
+                  </div>
+                  <input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    onFocus={() => setFocusedField('password')}
+                    onBlur={() => setFocusedField(null)}
+                    placeholder={"\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022"}
+                    autoComplete="new-password"
+                    className="w-full pl-11 pr-12 py-3 rounded-xl bg-input text-foreground border border-border focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all hover:border-primary/50"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-foreground/40 hover:text-primary transition-colors focus:outline-none"
                   >
-                    <div className="h-1.5 w-full bg-input rounded-full overflow-hidden">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${passwordStrength}%` }}
-                        className={`h-full ${getStrengthColor()} transition-colors`}
-                      />
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+                <AnimatePresence>
+                  {password && (
+                    <motion.div 
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="mt-2"
+                    >
+                      <div className="h-1.5 w-full bg-input rounded-full overflow-hidden">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${passwordStrength}%` }}
+                          className={`h-full ${getStrengthColor()} transition-colors`}
+                        />
+                      </div>
+                      <p className="text-[10px] uppercase font-bold mt-1 tracking-wider text-foreground/50">
+                        Strength: <span className={passwordStrength <= 50 ? "text-yellow-500" : passwordStrength <= 75 ? "text-blue-500" : "text-primary"}>
+                          {passwordStrength <= 50 ? "Weak" : passwordStrength <= 75 ? "Good" : "Strong"}
+                        </span>
+                      </p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+
+              <motion.div variants={itemVariants}>
+                <label htmlFor="confirmPassword" className={`block mb-2 text-sm font-medium transition-colors ${focusedField === 'confirmPassword' ? 'text-primary' : 'text-foreground/80'}`}>
+                  {t("confirmPassword") || "Confirm Password"}
+                </label>
+                <div className="relative group">
+                  <div className={`absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors ${focusedField === 'confirmPassword' ? 'text-primary' : 'text-foreground/40'}`}>
+                    <Lock className="w-5 h-5" />
+                  </div>
+                  <input
+                    id="confirmPassword"
+                    type={showConfirmPassword ? "text" : "password"}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    onFocus={() => setFocusedField('confirmPassword')}
+                    onBlur={() => setFocusedField(null)}
+                    placeholder={"\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022"}
+                    autoComplete="new-password"
+                    className={`w-full pl-11 pr-12 py-3 rounded-xl bg-input border ${showMismatch ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : passwordsMatch ? 'border-green-500 focus:border-green-500 focus:ring-green-500/20' : 'border-border focus:border-primary focus:ring-primary/20'} text-foreground focus:outline-none focus:ring-2 transition-all hover:border-primary/50`}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-foreground/40 hover:text-primary transition-colors focus:outline-none"
+                  >
+                    {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+                <AnimatePresence>
+                  {confirmPassword && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: -5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -5 }}
+                      className="mt-2 flex items-center gap-1.5"
+                    >
+                      {passwordsMatch ? (
+                        <><CheckCircle2 className="w-3.5 h-3.5 text-green-500" /><span className="text-xs text-green-500">Passwords match</span></>
+                      ) : (
+                        <><XCircle className="w-3.5 h-3.5 text-red-500" /><span className="text-xs text-red-500">Passwords do not match</span></>
+                      )}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+
+              <motion.div variants={itemVariants}>
+                <div className="flex items-center gap-2 mb-3">
+                  <label className="text-sm font-medium">I am a</label>
+                  <div className="group/tooltip relative">
+                    <Info className="w-4 h-4 text-primary cursor-help hover:scale-110 transition-transform" />
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 p-3 bg-popover text-xs rounded-xl border border-border opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none shadow-xl z-50">
+                      <span className="font-bold text-primary block mb-1">Student:</span> Browse and complete tasks.<br/>
+                      <span className="font-bold text-primary block mt-2 mb-1">Client:</span> Post tasks and hire students.
                     </div>
-                    <p className="text-[10px] uppercase font-bold mt-1 tracking-wider text-foreground/50">
-                      Strength: <span className={passwordStrength <= 50 ? "text-yellow-500" : passwordStrength <= 75 ? "text-blue-500" : "text-primary"}>
-                        {passwordStrength <= 50 ? "Weak" : passwordStrength <= 75 ? "Good" : "Strong"}
-                      </span>
-                    </p>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.div>
-
-            <motion.div variants={itemVariants}>
-              <label htmlFor="confirmPassword" className={`block mb-2 text-sm font-medium transition-colors ${focusedField === 'confirmPassword' ? 'text-primary' : 'text-foreground/80'}`}>
-                {t("confirmPassword") || "Confirm Password"}
-              </label>
-              <div className="relative group">
-                <div className={`absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors ${focusedField === 'confirmPassword' ? 'text-primary' : 'text-foreground/40'}`}>
-                  <Lock className="w-5 h-5" />
-                </div>
-                <input
-                  id="confirmPassword"
-                  type={showConfirmPassword ? "text" : "password"}
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  onFocus={() => setFocusedField('confirmPassword')}
-                  onBlur={() => setFocusedField(null)}
-                  placeholder={"\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022"}
-                  className={`w-full pl-11 pr-12 py-3 rounded-xl bg-input border ${showMismatch ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : passwordsMatch ? 'border-green-500 focus:border-green-500 focus:ring-green-500/20' : 'border-border focus:border-primary focus:ring-primary/20'} focus:outline-none focus:ring-2 transition-all hover:border-primary/50`}
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-foreground/40 hover:text-primary transition-colors focus:outline-none"
-                >
-                  {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
-              </div>
-              <AnimatePresence>
-                {confirmPassword && (
-                  <motion.div 
-                    initial={{ opacity: 0, y: -5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -5 }}
-                    className="mt-2 flex items-center gap-1.5"
-                  >
-                    {passwordsMatch ? (
-                      <><CheckCircle2 className="w-3.5 h-3.5 text-green-500" /><span className="text-xs text-green-500">Passwords match</span></>
-                    ) : (
-                      <><XCircle className="w-3.5 h-3.5 text-red-500" /><span className="text-xs text-red-500">Passwords do not match</span></>
-                    )}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.div>
-
-            <motion.div variants={itemVariants}>
-              <div className="flex items-center gap-2 mb-3">
-                <label className="text-sm font-medium">I am a</label>
-                <div className="group/tooltip relative">
-                  <Info className="w-4 h-4 text-primary cursor-help hover:scale-110 transition-transform" />
-                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 p-3 bg-popover text-xs rounded-xl border border-border opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none shadow-xl z-50">
-                    <span className="font-bold text-primary block mb-1">Student:</span> Browse and complete tasks.<br/>
-                    <span className="font-bold text-primary block mt-2 mb-1">Client:</span> Post tasks and hire students.
                   </div>
                 </div>
-              </div>
-              <div className="flex gap-4">
-                <label className="flex-1 relative">
-                  <input
-                    type="radio"
-                    name="role"
-                    value="student"
-                    checked={role === 'student'}
-                    onChange={(e) => setRole(e.target.value as 'student' | 'client')}
-                    className="sr-only"
-                  />
-                  <motion.div 
-                    whileHover={{ scale: 1.02 }} 
-                    whileTap={{ scale: 0.98 }}
-                    className={`px-4 py-3.5 rounded-xl border-2 cursor-pointer transition-all text-center font-bold ${role === 'student' ? 'border-primary bg-primary/10 text-primary' : 'border-border text-foreground/60 hover:border-primary/50'}`}
-                  >
-                    Student
-                  </motion.div>
-                </label>
-                <label className="flex-1 relative">
-                  <input
-                    type="radio"
-                    name="role"
-                    value="client"
-                    checked={role === 'client'}
-                    onChange={(e) => setRole(e.target.value as 'student' | 'client')}
-                    className="sr-only"
-                  />
-                  <motion.div 
-                    whileHover={{ scale: 1.02 }} 
-                    whileTap={{ scale: 0.98 }}
-                    className={`px-4 py-3.5 rounded-xl border-2 cursor-pointer transition-all text-center font-bold ${role === 'client' ? 'border-primary bg-primary/10 text-primary' : 'border-border text-foreground/60 hover:border-primary/50'}`}
-                  >
-                    Client
-                  </motion.div>
-                </label>
-              </div>
-            </motion.div>
-
-            <motion.div variants={itemVariants} className="space-y-4 pt-2">
-              <label className="flex items-start gap-3 cursor-pointer group">
-                <div className="relative flex items-center justify-center mt-0.5">
-                  <input
-                    type="checkbox"
-                    checked={agreeTerms}
-                    onChange={(e) => setAgreeTerms(e.target.checked)}
-                    className="w-5 h-5 rounded-md border-2 border-border bg-input text-primary focus:ring-primary/20 transition-all group-hover:border-primary/50 cursor-pointer appearance-none checked:bg-primary checked:border-primary"
-                  />
-                  <CheckCircle2 className={`absolute w-3.5 h-3.5 text-primary-foreground pointer-events-none transition-opacity ${agreeTerms ? 'opacity-100' : 'opacity-0'}`} />
+                <div className="flex gap-4">
+                  <label className="flex-1 relative">
+                    <input
+                      type="radio"
+                      name="role"
+                      value="student"
+                      checked={role === 'student'}
+                      onChange={(e) => setRole(e.target.value as 'student' | 'client')}
+                      className="sr-only"
+                    />
+                    <motion.div 
+                      whileHover={{ scale: 1.02 }} 
+                      whileTap={{ scale: 0.98 }}
+                      className={`px-4 py-3.5 rounded-xl border-2 cursor-pointer transition-all text-center font-bold ${role === 'student' ? 'border-primary bg-primary/10 text-primary' : 'border-border text-foreground/60 hover:border-primary/50'}`}
+                    >
+                      Student
+                    </motion.div>
+                  </label>
+                  <label className="flex-1 relative">
+                    <input
+                      type="radio"
+                      name="role"
+                      value="client"
+                      checked={role === 'client'}
+                      onChange={(e) => setRole(e.target.value as 'student' | 'client')}
+                      className="sr-only"
+                    />
+                    <motion.div 
+                      whileHover={{ scale: 1.02 }} 
+                      whileTap={{ scale: 0.98 }}
+                      className={`px-4 py-3.5 rounded-xl border-2 cursor-pointer transition-all text-center font-bold ${role === 'client' ? 'border-primary bg-primary/10 text-primary' : 'border-border text-foreground/60 hover:border-primary/50'}`}
+                    >
+                      Client
+                    </motion.div>
+                  </label>
                 </div>
-                <span className="text-sm text-foreground/70 leading-tight select-none">
-                  I agree to the <Link to="/terms" className="text-primary hover:underline font-bold transition-all">Terms of Service</Link> and <Link to="/privacy" className="text-primary hover:underline font-bold transition-all">Privacy Policy</Link>
-                </span>
-              </label>
-              
-              <label className="flex items-start gap-3 cursor-pointer group">
-                <div className="relative flex items-center justify-center mt-0.5">
-                  <input
-                    type="checkbox"
-                    checked={newsletter}
-                    onChange={(e) => setNewsletter(e.target.checked)}
-                    className="w-5 h-5 rounded-md border-2 border-border bg-input text-primary focus:ring-primary/20 transition-all group-hover:border-primary/50 cursor-pointer appearance-none checked:bg-primary checked:border-primary"
-                  />
-                  <CheckCircle2 className={`absolute w-3.5 h-3.5 text-primary-foreground pointer-events-none transition-opacity ${newsletter ? 'opacity-100' : 'opacity-0'}`} />
-                </div>
-                <span className="text-sm text-foreground/70 leading-tight select-none">
-                  Send me task updates and career tips (Optional)
-                </span>
-              </label>
-            </motion.div>
+              </motion.div>
 
-            <motion.div variants={itemVariants}>
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                type="submit"
-                disabled={loading}
-                className="w-full px-6 py-4 rounded-xl bg-primary text-primary-foreground font-bold text-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-primary/25 mt-2"
-              >
-                {loading ? "..." : t("register") || "Register"}
-              </motion.button>
-            </motion.div>
+              <motion.div variants={itemVariants} className="space-y-4 pt-2">
+                <label className="flex items-start gap-3 cursor-pointer group">
+                  <div className="relative flex items-center justify-center mt-0.5">
+                    <input
+                      type="checkbox"
+                      checked={agreeTerms}
+                      onChange={(e) => setAgreeTerms(e.target.checked)}
+                      className="w-5 h-5 rounded-md border-2 border-border bg-input text-primary focus:ring-primary/20 transition-all group-hover:border-primary/50 cursor-pointer appearance-none checked:bg-primary checked:border-primary"
+                    />
+                    <CheckCircle2 className={`absolute w-3.5 h-3.5 text-primary-foreground pointer-events-none transition-opacity ${agreeTerms ? 'opacity-100' : 'opacity-0'}`} />
+                  </div>
+                  <span className="text-sm text-foreground/70 leading-tight select-none">
+                    I agree to the <Link to="/terms" className="text-primary hover:underline font-bold transition-all">Terms of Service</Link> and <Link to="/privacy" className="text-primary hover:underline font-bold transition-all">Privacy Policy</Link>
+                  </span>
+                </label>
+                
+                <label className="flex items-start gap-3 cursor-pointer group">
+                  <div className="relative flex items-center justify-center mt-0.5">
+                    <input
+                      type="checkbox"
+                      checked={newsletter}
+                      onChange={(e) => setNewsletter(e.target.checked)}
+                      className="w-5 h-5 rounded-md border-2 border-border bg-input text-primary focus:ring-primary/20 transition-all group-hover:border-primary/50 cursor-pointer appearance-none checked:bg-primary checked:border-primary"
+                    />
+                    <CheckCircle2 className={`absolute w-3.5 h-3.5 text-primary-foreground pointer-events-none transition-opacity ${newsletter ? 'opacity-100' : 'opacity-0'}`} />
+                  </div>
+                  <span className="text-sm text-foreground/70 leading-tight select-none">
+                    Send me task updates and career tips (Optional)
+                  </span>
+                </label>
+              </motion.div>
+
+              <motion.div variants={itemVariants}>
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  type="submit"
+                  disabled={loading}
+                  className="w-full px-6 py-4 rounded-xl bg-primary text-primary-foreground font-bold text-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-primary/25 mt-2"
+                >
+                  {loading ? "..." : (t("register") || "Register")}
+                </motion.button>
+              </motion.div>
           </motion.form>
 
           <div className="mt-8 text-center">

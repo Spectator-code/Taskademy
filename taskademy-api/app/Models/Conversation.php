@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Conversation extends Model
 {
-    protected $fillable = ['user1_id', 'user2_id'];
+    protected $fillable = ['user1_id', 'user2_id', 'is_group', 'title', 'task_id'];
 
     public function user1()
     {
@@ -27,5 +27,15 @@ class Conversation extends Model
     {
         return $this->hasOne(Message::class)->latestOfMany();
     }
-}
 
+    public function participants()
+    {
+        return $this->belongsToMany(User::class, 'conversation_participants')
+            ->withTimestamps();
+    }
+
+    public function task()
+    {
+        return $this->belongsTo(Task::class);
+    }
+}

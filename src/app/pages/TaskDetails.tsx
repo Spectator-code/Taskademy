@@ -1,9 +1,9 @@
 import { Link, useParams } from "react-router";
 import { motion } from "motion/react";
-import { ArrowLeft, PhilippinePeso, Clock, User, Star, Heart, FileText, CheckCircle } from "lucide-react";
+import { ArrowLeft, PhilippinePeso, Clock, User, Star, Heart } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { taskService } from "../services/task.service";
-import { Task, TaskApplication } from "../types/api";
+import { Task } from "../types/api";
 import { useAuth } from "../contexts/AuthContext";
 import { toast } from "sonner";
 import { formatPeso } from "../utils/currency";
@@ -14,10 +14,8 @@ export default function TaskDetails() {
   const { id } = useParams();
   const { user } = useAuth();
   const [task, setTask] = useState<Task | null>(null);
-  const [applications, setApplications] = useState<TaskApplication[]>([]);
   const [loading, setLoading] = useState(true);
   const [applying, setApplying] = useState(false);
-  const [acceptingId, setAcceptingId] = useState<number | null>(null);
 
   useEffect(() => {
     if (!id) {
@@ -29,20 +27,9 @@ export default function TaskDetails() {
 
     taskService
       .getTaskById(Number(id))
-      .then(async (response) => {
+      .then((response) => {
         if (!ignore) {
           setTask(response);
-        }
-
-        if (
-          response
-          && user
-          && (response.client_id === user.id || user.role === "admin")
-        ) {
-          const taskApplications = await taskService.getTaskApplications(response.id);
-          if (!ignore) {
-            setApplications(taskApplications);
-          }
         }
       })
       .catch((error: any) => {
@@ -59,9 +46,8 @@ export default function TaskDetails() {
     return () => {
       ignore = true;
     };
-  }, [id, user]);
+  }, [id]);
 
-  const canManageApplications = !!task && !!user && (task.client_id === user.id || user.role === "admin");
   const canApply =
     !!task
     && !!user
@@ -97,29 +83,6 @@ export default function TaskDetails() {
     }
   };
 
-  const handleAccept = async (studentId: number) => {
-    if (!task) {
-      return;
-    }
-
-    setAcceptingId(studentId);
-    try {
-      const updatedTask = await taskService.acceptApplication(task.id, studentId);
-      setTask(updatedTask);
-      setApplications((current) =>
-        current.map((application) => ({
-          ...application,
-          status: application.applicant_id === studentId ? "accepted" : "rejected",
-        }))
-      );
-      toast.success("Applicant accepted.");
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || "Failed to accept applicant.");
-    } finally {
-      setAcceptingId(null);
-    }
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -141,20 +104,19 @@ export default function TaskDetails() {
     );
   }
 
-  const isSaved = JSON.parse(localStorage.getItem('saved_tasks') || '[]').includes(task.id);
+  const isSaved = JSON.parse(localStorage.getItem("saved_tasks") || "[]").includes(task.id);
 
   const toggleSave = () => {
-    const saved = JSON.parse(localStorage.getItem('saved_tasks') || '[]');
+    const saved = JSON.parse(localStorage.getItem("saved_tasks") || "[]");
     if (saved.includes(task.id)) {
-      const filtered = saved.filter((id: number) => id !== task.id);
-      localStorage.setItem('saved_tasks', JSON.stringify(filtered));
+      const filtered = saved.filter((savedTaskId: number) => savedTaskId !== task.id);
+      localStorage.setItem("saved_tasks", JSON.stringify(filtered));
       toast.success("Task removed from saved items");
     } else {
       saved.push(task.id);
-      localStorage.setItem('saved_tasks', JSON.stringify(saved));
+      localStorage.setItem("saved_tasks", JSON.stringify(saved));
       toast.success(t("taskSaved") || "Task saved!");
     }
-    // Re-render
     setTask({ ...task });
   };
 
@@ -181,6 +143,11 @@ export default function TaskDetails() {
                 <span className="px-4 py-1.5 rounded-full bg-primary/10 text-primary">
                   {task.category}
                 </span>
+                {task.is_group_task && (
+                  <span className="px-4 py-1.5 rounded-full bg-blue-500/10 text-blue-400">
+                    Group Task · {task.assigned_students_count ?? task.assignees?.length ?? 0}/{task.required_students_count ?? 1}
+                  </span>
+                )}
                 <span className="px-4 py-1.5 rounded-full bg-green-500/10 text-green-400 capitalize">
                   {task.status.replace("_", " ")}
                 </span>
@@ -264,61 +231,31 @@ export default function TaskDetails() {
               </div>
             </div>
 
-            {canManageApplications && (
+            {task.is_group_task && (
               <div className="bg-card rounded-2xl p-6 border border-border">
-                <h2 className="text-2xl font-bold mb-4">{t("applicants") || "Applicants"}</h2>
-                {applications.length === 0 ? (
-                  <p className="text-foreground/60">{t("noApplicantsYet") || "No one has applied yet."}</p>
-                ) : (
-                  <div className="space-y-4">
-                    {applications.map((application) => (
-                      <div
-                        key={application.id}
-                        className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 p-4 rounded-xl bg-background/50 border border-border"
+                <h2 className="text-2xl font-bold mb-4">Team Setup</h2>
+                <p className="text-foreground/70 mb-4">
+                  This project is hiring multiple students. Approved students will be added to one shared conversation automatically.
+                </p>
+                <div className="text-sm text-foreground/60 mb-4">
+                  Hired: <span className="font-bold text-foreground">{task.assigned_students_count ?? task.assignees?.length ?? 0}</span> / {task.required_students_count ?? 1}
+                </div>
+                <div className="space-y-3">
+                  {(task.assignees ?? []).length === 0 ? (
+                    <div className="text-sm text-foreground/60">No students hired yet.</div>
+                  ) : (
+                    (task.assignees ?? []).map((assignee) => (
+                      <Link
+                        key={assignee.id}
+                        to={`/profile/${assignee.id}`}
+                        className="flex items-center justify-between rounded-xl border border-border bg-background/40 px-4 py-3 hover:border-primary/30 transition-colors"
                       >
-                        <div className="flex items-center gap-3">
-                          <div className="w-11 h-11 rounded-full bg-primary/15 flex items-center justify-center">
-                            <User className="w-5 h-5 text-primary" />
-                          </div>
-                          <div>
-                            <Link
-                              to={`/profile/${application.applicant_id}`}
-                              className="font-bold hover:text-primary transition-colors"
-                            >
-                              {application.applicant?.name ?? "Applicant"}
-                            </Link>
-                            <div className="text-sm text-foreground/60 capitalize">
-                              {application.applicant?.role ?? "student"} · {application.status}
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="flex flex-wrap items-center gap-2">
-                          <Link
-                            to={`/profile/${application.applicant_id}`}
-                            className="px-4 py-2 rounded-xl bg-card border border-border hover:bg-muted transition-all flex items-center gap-2 text-sm"
-                          >
-                            <FileText className="w-4 h-4" />
-                            Profile / Resume
-                          </Link>
-                          <button
-                            type="button"
-                            onClick={() => handleAccept(application.applicant_id)}
-                            disabled={application.status === "accepted" || acceptingId === application.applicant_id}
-                            className="px-4 py-2 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-sm"
-                          >
-                            <CheckCircle className="w-4 h-4" />
-                            {application.status === "accepted"
-                              ? t("accepted") || "Accepted"
-                              : acceptingId === application.applicant_id
-                              ? t("accepting") || "Accepting..."
-                              : t("accept") || "Accept"}
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                        <span className="font-medium">{assignee.name}</span>
+                        <span className="text-sm text-foreground/60">View profile</span>
+                      </Link>
+                    ))
+                  )}
+                </div>
               </div>
             )}
           </motion.div>
@@ -348,13 +285,13 @@ export default function TaskDetails() {
                   : t("applyForTask") || "Apply for Task"}
               </button>
 
-              <button 
+              <button
                 onClick={toggleSave}
                 className={`w-full px-6 py-3 rounded-xl border transition-all flex items-center justify-center gap-2 font-bold ${
-                  isSaved ? 'bg-red-500/10 border-red-500 text-red-500' : 'bg-card border-border hover:bg-muted'
+                  isSaved ? "bg-red-500/10 border-red-500 text-red-500" : "bg-card border-border hover:bg-muted"
                 }`}
               >
-                <Heart className={`w-5 h-5 ${isSaved ? 'fill-red-500' : ''}`} />
+                <Heart className={`w-5 h-5 ${isSaved ? "fill-red-500" : ""}`} />
                 {isSaved ? "Saved" : t("saveTask") || "Save Task"}
               </button>
 

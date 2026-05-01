@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Conversation;
 use App\Models\Task;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -210,5 +211,78 @@ class TaskApiTest extends TestCase
         $this->getJson("/api/tasks/{$task->id}")
             ->assertOk()
             ->assertJsonPath('id', $task->id);
+    }
+
+    public function test_group_task_can_hire_multiple_students_and_create_group_conversation(): void
+    {
+        $client = User::factory()->create(['role' => 'client']);
+        $studentA = User::factory()->create(['role' => 'student']);
+        $studentB = User::factory()->create(['role' => 'student']);
+
+        $task = Task::create([
+            'title' => 'Large website rebuild',
+            'category' => 'Development',
+            'description' => 'Needs multiple students.',
+            'requirements' => null,
+            'budget' => 200,
+            'deadline' => now()->addDays(7)->toDateString(),
+            'client_id' => $client->id,
+            'student_id' => null,
+            'status' => 'open',
+            'moderation_status' => 'approved',
+            'is_group_task' => true,
+            'required_students_count' => 2,
+        ]);
+
+        $task->applications()->create([
+            'applicant_id' => $studentA->id,
+            'status' => 'pending',
+        ]);
+        $task->applications()->create([
+            'applicant_id' => $studentB->id,
+            'status' => 'pending',
+        ]);
+
+        Sanctum::actingAs($client);
+
+        $this->postJson("/api/tasks/{$task->id}/accept", [
+            'student_id' => $studentA->id,
+        ])
+            ->assertOk()
+            ->assertJsonPath('is_group_task', true)
+            ->assertJsonPath('assigned_students_count', 1)
+            ->assertJsonPath('status', 'open');
+
+        $this->postJson("/api/tasks/{$task->id}/accept", [
+            'student_id' => $studentB->id,
+        ])
+            ->assertOk()
+            ->assertJsonPath('assigned_students_count', 2)
+            ->assertJsonPath('status', 'in_progress');
+
+        $conversation = Conversation::where('task_id', $task->id)->first();
+
+        $this->assertNotNull($conversation);
+        $this->assertTrue((bool) $conversation->is_group);
+        $this->assertDatabaseHas('conversation_participants', [
+            'conversation_id' => $conversation->id,
+            'user_id' => $client->id,
+        ]);
+        $this->assertDatabaseHas('conversation_participants', [
+            'conversation_id' => $conversation->id,
+            'user_id' => $studentA->id,
+        ]);
+        $this->assertDatabaseHas('conversation_participants', [
+            'conversation_id' => $conversation->id,
+            'user_id' => $studentB->id,
+        ]);
+        $this->assertDatabaseHas('task_assignees', [
+            'task_id' => $task->id,
+            'user_id' => $studentA->id,
+        ]);
+        $this->assertDatabaseHas('task_assignees', [
+            'task_id' => $task->id,
+            'user_id' => $studentB->id,
+        ]);
     }
 }

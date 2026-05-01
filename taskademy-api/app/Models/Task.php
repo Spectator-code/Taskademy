@@ -19,8 +19,14 @@ class Task extends Model
         'moderation_status',
         'rejection_reason',
         'archived_at',
+        'payment_reference',
+        'completed_at',
+        'payment_confirmed_at',
+        'earnings_released_at',
         'client_id',
         'student_id',
+        'is_group_task',
+        'required_students_count',
     ];
 
     protected function casts(): array
@@ -28,7 +34,12 @@ class Task extends Model
         return [
             'budget' => 'decimal:2',
             'deadline' => 'date',
+            'is_group_task' => 'boolean',
+            'required_students_count' => 'integer',
             'archived_at' => 'datetime',
+            'completed_at' => 'datetime',
+            'payment_confirmed_at' => 'datetime',
+            'earnings_released_at' => 'datetime',
         ];
     }
 
@@ -45,5 +56,16 @@ class Task extends Model
     public function applications()
     {
         return $this->hasMany(TaskApplication::class);
+    }
+
+    public function assignees()
+    {
+        return $this->belongsToMany(User::class, 'task_assignees')
+            ->withTimestamps();
+    }
+
+    public function groupConversation()
+    {
+        return $this->hasOne(Conversation::class);
     }
 }
