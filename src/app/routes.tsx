@@ -31,13 +31,11 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 function RootLayout() {
   const location = useLocation();
   return (
-    <AnimatePresence mode="wait">
-      <PageTransition key={location.pathname}>
-        <Outlet />
-      </PageTransition>
-    </AnimatePresence>
+    <Outlet />
   );
 }
+
+
 
 export const router = createBrowserRouter([
   {

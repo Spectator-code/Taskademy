@@ -35,7 +35,7 @@ export default function LoadingSplash({ onComplete }: { onComplete: () => void }
               transition={{ duration: 2, ease: "linear", repeat: Infinity }}
               className="w-24 h-24 rounded-3xl bg-primary/20 flex items-center justify-center p-4 border-2 border-primary/30"
             >
-              <img src="/logo.png" alt="Taskademy" className="w-full h-full object-contain filter invert dark:invert-0" />
+              <img src="/logo light.png" alt="Taskademy Logo" className="w-full h-full object-contain" />
             </motion.div>
             
             <div className="text-center">

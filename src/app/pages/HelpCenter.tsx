@@ -5,7 +5,7 @@ import { useApp } from "../contexts/AppContext";
 
 export default function HelpCenter() {
   const { theme } = useApp();
-  const logoSrc = theme === "modern" ? "/logo.png" : "/logos.png";
+  const logoSrc = theme === "modern" ? "/logo light.png" : "/logo dark.png";
   const categories = [
     { icon: UserCircle, title: "Account & Profile", desc: "Manage your settings, verify your identity, and build a standout portfolio." },
     { icon: Briefcase, title: "Finding Work", desc: "Tips on searching, bidding, and communicating with prospective clients." },

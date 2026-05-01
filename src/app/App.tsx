@@ -5,17 +5,18 @@ import { Toaster } from './components/ui/sonner';
 
 import { AppProvider } from './contexts/AppContext';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import LoadingSplash from './components/ui/LoadingSplash';
 import ScrollToTopButton from './components/ui/ScrollToTopButton';
 
 export default function App() {
   const [loading, setLoading] = useState(true);
+  const handleLoadingComplete = useCallback(() => setLoading(false), []);
 
   return (
     <AuthProvider>
       <AppProvider>
-        {loading && <LoadingSplash onComplete={() => setLoading(false)} />}
+        {loading && <LoadingSplash onComplete={handleLoadingComplete} />}
         {!loading && (
           <>
             <RouterProvider router={router} />

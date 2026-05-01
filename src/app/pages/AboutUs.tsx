@@ -5,7 +5,7 @@ import { useApp } from "../contexts/AppContext";
 
 export default function AboutUs() {
   const { theme } = useApp();
-  const logoSrc = theme === "modern" ? "/logo.png" : "/logos.png";
+  const logoSrc = theme === "modern" ? "/logo light.png" : "/logo dark.png";
   const values = [
     {
       icon: Rocket,

@@ -8,7 +8,7 @@ import { useApp } from "../contexts/AppContext";
 // Main Careers component renders the page layout and sections.
 export default function Careers() {
   const { theme } = useApp();
-  const logoSrc = theme === "modern" ? "/logo.png" : "/logos.png";
+  const logoSrc = theme === "modern" ? "/logo light.png" : "/logo dark.png";
   return (
     <div className="min-h-screen bg-background p-6 md:p-12">
       <div className="max-w-5xl mx-auto">

@@ -1,7 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 
-type Theme = "modern" | "minimalist" | "classic";
+type Theme = "modern" | "minimalist";
 
 interface AppContextType {
   theme: Theme;
@@ -48,7 +48,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const root = window.document.documentElement;
-    root.classList.remove("modern", "minimalist", "classic", "dark");
+    root.classList.remove("modern", "minimalist", "dark");
     if (theme !== "modern") {
       root.classList.add(theme);
     }

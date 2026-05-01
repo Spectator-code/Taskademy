@@ -16,7 +16,7 @@ export default function Landing() {
   const { t } = useTranslation();
   const { theme } = useApp();
   const homeTarget = isAuthenticated ? "/dashboard" : "/";
-  const logoSrc = theme === "modern" ? "/logo.png" : "/logos.png";
+  const logoSrc = theme === "modern" ? "/logo light.png" : "/logo dark.png";
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -46,7 +46,7 @@ export default function Landing() {
             transition={{ duration: 0.6 }}
           >
             <Link to={homeTarget} onClick={handleHomeClick} className="text-2xl font-bold flex items-center gap-4">
-              <img src={logoSrc} alt="Taskademy" className="h-35 w-auto object-contain" />
+              <img src={logoSrc} alt="Taskademy" className="h-28 w-auto object-contain" />
             </Link>
           </motion.div>
 
@@ -62,9 +62,18 @@ export default function Landing() {
             <Link to="/browse" className="text-foreground/80 hover:text-foreground transition-colors">
               {t("browseTasks") || "Browse Tasks"}
             </Link>
-            <a href="#how-it-works" className="text-foreground/80 hover:text-foreground transition-colors">
+            <Link 
+              to="/#how-it-works" 
+              onClick={(e) => {
+                if (location.pathname === "/") {
+                  e.preventDefault();
+                  document.getElementById("how-it-works")?.scrollIntoView({ behavior: "smooth" });
+                }
+              }}
+              className="text-foreground/80 hover:text-foreground transition-colors"
+            >
               {t("howItWorks") || "How it Works"}
-            </a>
+            </Link>
           </motion.nav>
 
           <motion.div
@@ -75,26 +84,42 @@ export default function Landing() {
           >
             <ThemeSwitcher />
             {isAuthenticated ? (
-              <Link
-                to="/dashboard"
-                className="px-5 py-2.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all"
+              <motion.div 
+                whileHover={{ scale: 1.05, y: -2 }} 
+                whileTap={{ scale: 0.95 }}
+                className="relative group"
               >
-                Dashboard
-              </Link>
+                <div className="absolute -inset-0.5 bg-primary/50 rounded-xl blur opacity-0 group-hover:opacity-100 transition duration-500"></div>
+                <Link
+                  to="/dashboard"
+                  className="relative px-6 py-2.5 rounded-xl bg-primary text-primary-foreground font-bold shadow-lg shadow-primary/20 transition-all flex items-center justify-center"
+                >
+                  Dashboard
+                </Link>
+              </motion.div>
             ) : (
               <>
-                <Link
-                  to="/login"
-                  className="px-5 py-2.5 rounded-xl text-foreground/80 hover:text-foreground transition-colors"
+                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                  <Link
+                    to="/login"
+                    className="px-5 py-2.5 rounded-xl text-foreground/80 hover:text-foreground hover:bg-foreground/5 transition-all font-medium"
+                  >
+                    {t("login") || "Login"}
+                  </Link>
+                </motion.div>
+                <motion.div 
+                  whileHover={{ scale: 1.05, y: -2 }} 
+                  whileTap={{ scale: 0.95 }}
+                  className="relative group"
                 >
-                  {t("login") || "Login"}
-                </Link>
-                <Link
-                  to="/register"
-                  className="px-5 py-2.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all"
-                >
-                  {t("register") || "Register"}
-                </Link>
+                  <div className="absolute -inset-0.5 bg-primary/50 rounded-xl blur opacity-0 group-hover:opacity-100 transition duration-500"></div>
+                  <Link
+                    to="/register"
+                    className="relative px-6 py-2.5 rounded-xl bg-primary text-primary-foreground font-bold shadow-lg shadow-primary/20 transition-all flex items-center justify-center"
+                  >
+                    {t("register") || "Register"}
+                  </Link>
+                </motion.div>
               </>
             )}
           </motion.div>
@@ -277,17 +302,28 @@ export default function Landing() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.6, delay: index * 0.2 }}
+                whileHover={{ y: -8, scale: 1.02 }}
                 className="relative group"
               >
-                <div className={`absolute -inset-4 bg-gradient-to-br ${item.color} rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity blur-xl`} />
+                {/* Enhanced Animated Glow Background */}
+                <div className={`absolute -inset-4 bg-gradient-to-br ${item.color} rounded-3xl opacity-0 group-hover:opacity-100 transition-all duration-500 blur-xl group-hover:blur-2xl`} />
                 
-                <div className="relative bg-card/80 backdrop-blur-md p-10 rounded-3xl border border-border group-hover:border-primary/30 transition-all text-center">
-                  <div className="w-20 h-20 mx-auto bg-primary/10 rounded-2xl flex items-center justify-center mb-8 group-hover:scale-110 transition-transform">
-                    <item.icon className="w-10 h-10 text-primary" />
-                    <div className="absolute -top-3 -right-3 w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold shadow-lg">
+                <div className="relative bg-card/80 backdrop-blur-md p-10 rounded-3xl border border-border group-hover:border-primary/40 transition-all duration-300 text-center shadow-lg group-hover:shadow-primary/20">
+                  <motion.div 
+                    whileHover={{ scale: 1.1, rotate: [0, -5, 5, 0] }}
+                    transition={{ duration: 0.5 }}
+                    className="w-20 h-20 mx-auto bg-primary/10 rounded-2xl flex items-center justify-center mb-8 relative"
+                  >
+                    <item.icon className="w-10 h-10 text-primary drop-shadow-md" />
+                    
+                    {/* Animated Step Badge */}
+                    <motion.div 
+                      whileHover={{ scale: 1.2, backgroundColor: "var(--color-primary-focus)" }}
+                      className="absolute -top-3 -right-3 w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold shadow-lg shadow-primary/30"
+                    >
                       {item.step}
-                    </div>
-                  </div>
+                    </motion.div>
+                  </motion.div>
                   
                   <h3 className="text-2xl font-bold mb-4">{item.title}</h3>
                   <div className="text-foreground/70 leading-relaxed min-h-[4rem]">
@@ -312,7 +348,7 @@ export default function Landing() {
             <div className="lg:col-span-2">
               <div className="mb-6">
                 <Link to={homeTarget} onClick={handleHomeClick}>
-                  <img src={logoSrc} alt="Taskademy" className="h-35 w-auto object-contain hover:opacity-80 transition-opacity" />
+                  <img src={logoSrc} alt="Taskademy" className="h-28 w-auto object-contain hover:opacity-80 transition-opacity" />
                 </Link>
               </div>
               <p className="text-foreground/60 text-lg leading-relaxed max-w-sm mb-8">
@@ -324,7 +360,7 @@ export default function Landing() {
               <h4 className="font-bold text-lg mb-6 text-foreground tracking-tight">{t("platform") || "Platform"}</h4>
               <ul className="space-y-4">
                 <li><Link to="/browse" className="text-foreground/60 hover:text-primary transition-colors flex items-center gap-2 group"><div className="w-1.5 h-1.5 rounded-full bg-primary/0 group-hover:bg-primary transition-all" />{t("browseTasks") || "Browse Tasks"}</Link></li>
-                <li><a href="#how-it-works" className="text-foreground/60 hover:text-primary transition-colors flex items-center gap-2 group"><div className="w-1.5 h-1.5 rounded-full bg-primary/0 group-hover:bg-primary transition-all" />{t("howItWorks") || "How it Works"}</a></li>
+                <li><Link to="/#how-it-works" className="text-foreground/60 hover:text-primary transition-colors flex items-center gap-2 group"><div className="w-1.5 h-1.5 rounded-full bg-primary/0 group-hover:bg-primary transition-all" />{t("howItWorks") || "How it Works"}</Link></li>
                 <li><Link to="/register" className="text-foreground/60 hover:text-primary transition-colors flex items-center gap-2 group"><div className="w-1.5 h-1.5 rounded-full bg-primary/0 group-hover:bg-primary transition-all" />{t("getStarted") || "Get Started"}</Link></li>
               </ul>
             </div>

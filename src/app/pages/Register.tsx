@@ -10,7 +10,7 @@ import { useTranslation } from "../hooks/useTranslation";
 export default function Register() {
   const navigate = useNavigate();
   const { theme } = useApp();
-  const logoSrc = theme === "modern" ? "/logo.png" : "/logos.png";
+  const logoSrc = theme === "modern" ? "/logo light.png" : "/logo dark.png";
   const { register } = useAuth();
   const { t } = useTranslation();
   const [name, setName] = useState("");

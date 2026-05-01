@@ -6,7 +6,7 @@ import { useApp } from "../contexts/AppContext";
 export default function NotFound() {
   const error: any = useRouteError();
   const { theme } = useApp();
-  const logoSrc = theme === "modern" ? "/logo.png" : "/logos.png";
+  const logoSrc = theme === "modern" ? "/logo light.png" : "/logo dark.png";
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 text-center">

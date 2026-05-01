@@ -7,7 +7,7 @@ import { toast } from "sonner";
 
 export default function Contact() {
   const { theme } = useApp();
-  const logoSrc = theme === "modern" ? "/logo.png" : "/logos.png";
+  const logoSrc = theme === "modern" ? "/logo light.png" : "/logo dark.png";
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     firstName: "",

@@ -6,7 +6,7 @@ import { toast } from "sonner";
 
 export default function Blog() {
   const { theme } = useApp();
-  const logoSrc = theme === "modern" ? "/logo.png" : "/logos.png";
+  const logoSrc = theme === "modern" ? "/logo light.png" : "/logo dark.png";
   const featuredPost = {
     category: "Platform Updates",
     title: "Taskademy 2.0: Redefining Student Freelancing",

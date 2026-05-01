@@ -22,7 +22,7 @@ export default function DashboardSidebar() {
   const { isSidebarCollapsed, toggleSidebar, theme } = useApp();
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const logoSrc = theme === "modern" ? "/logo.png" : "/logos.png";
+  const logoSrc = theme === "modern" ? "/logo light.png" : "/logo dark.png";
   const location = useLocation();
 
   const handleLogout = async () => {
@@ -85,6 +85,7 @@ export default function DashboardSidebar() {
             to: "/admin",
             icon: Star,
             label: t("adminPanel") || "Admin Panel",
+            isAdmin: true,
           },
         ]
       : []),
@@ -103,13 +104,13 @@ export default function DashboardSidebar() {
       >
         {!isSidebarCollapsed && (
           <Link to="/dashboard" className="text-xl font-bold flex items-center gap-3 min-w-0">
-            <img src={logoSrc} alt="Taskademy" className="h-20 w-50 object-contain flex-shrink-0" />
+            <img src={logoSrc} alt="Taskademy Logo" className="h-20 w-auto object-contain flex-shrink-0" />
             
           </Link>
         )}
         {isSidebarCollapsed && (
           <Link to="/dashboard" className="flex justify-center">
-            <img src={logoSrc} alt="Taskademy" className="h-11 w-auto object-contain" />
+            <img src={logoSrc} alt="Taskademy Logo" className="h-11 w-auto object-contain" />
           </Link>
         )}
         <button
@@ -160,6 +161,8 @@ export default function DashboardSidebar() {
               } ${
                 isActive
                   ? "bg-primary/10 text-primary"
+                  : (item as any).isAdmin
+                  ? "bg-amber-500/10 text-amber-500 hover:bg-amber-500/20 border border-amber-500/20"
                   : "text-foreground/60 hover:bg-card hover:text-foreground"
               }`}
               title={item.label}

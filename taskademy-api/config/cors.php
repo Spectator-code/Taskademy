@@ -8,6 +8,7 @@ return [
     'paths' => ['api/*', 'broadcasting/auth', 'sanctum/csrf-cookie'],
     'allowed_methods' => ['*'],
     'allowed_origins' => $frontendOrigins,
+
     'allowed_origins_patterns' => [],
     'allowed_headers' => ['*'],
     'exposed_headers' => [],

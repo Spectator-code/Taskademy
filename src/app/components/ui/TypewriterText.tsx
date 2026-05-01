@@ -1,30 +1,59 @@
-import { useState, useEffect, useRef } from 'react';
 import { motion, useInView } from 'motion/react';
+import { useRef } from 'react';
 
 export default function TypewriterText({ text, delay = 40 }: { text: string, delay?: number }) {
-  const [currentText, setCurrentText] = useState('');
-  const [currentIndex, setCurrentIndex] = useState(0);
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, amount: 0.5 });
+  
+  const words = text.split(" ");
 
-  useEffect(() => {
-    if (isInView && currentIndex < text.length) {
-      const timeout = setTimeout(() => {
-        setCurrentText(prevText => prevText + text[currentIndex]);
-        setCurrentIndex(prevIndex => prevIndex + 1);
-      }, delay);
-      return () => clearTimeout(timeout);
-    }
-  }, [currentIndex, delay, text, isInView]);
+  const container = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: { 
+        staggerChildren: delay / 1000,
+        delayChildren: 0.1,
+      },
+    },
+  };
+
+  const child = {
+    visible: {
+      opacity: 1,
+      y: 0,
+      filter: "blur(0px)",
+      transition: {
+        type: "spring",
+        damping: 15,
+        stiffness: 100,
+      },
+    },
+    hidden: {
+      opacity: 0,
+      y: 10,
+      filter: "blur(4px)",
+    },
+  };
 
   return (
-    <span ref={ref} className="inline-block">
-      {currentText}
-      <motion.span
-        animate={{ opacity: [0, 1, 0] }}
-        transition={{ repeat: Infinity, duration: 0.8, ease: "linear" }}
-        className="inline-block w-[2px] h-[1em] bg-primary ml-1 align-middle -mt-1"
-      />
-    </span>
+    <motion.div
+      ref={ref}
+      style={{ display: "inline-block" }}
+      variants={container}
+      initial="hidden"
+      animate={isInView ? "visible" : "hidden"}
+    >
+      {words.map((word, index) => (
+        <motion.span
+          variants={child}
+          className="inline-block mr-[0.25em]"
+          key={index}
+        >
+          {word}
+        </motion.span>
+      ))}
+    </motion.div>
   );
 }
+
